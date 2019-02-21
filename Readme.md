@@ -1,7 +1,7 @@
 # Личный проект «Большое путешествие» [![Build status][travis-image]][travis-url]
 
 * Студент: [Антон](https://up.htmlacademy.ru/ecmascript/8/user/29965).
-* Наставник: `Неизвестно`.
+* Наставник: [Игорь Тараканов] (https://htmlacademy.ru/profile/id487569).
 
 ---
 
