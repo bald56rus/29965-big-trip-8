@@ -1,7 +1,6 @@
 class TripItemForm {
   constructor(tripItem) {
     this._tripItem = tripItem;
-    this.$element = null;
     this._submitHandler = this._submitHandler.bind(this);
     this._resetHandler = this._resetHandler.bind(this);
   }
@@ -35,14 +34,14 @@ class TripItemForm {
   $renderOffer(offer) {
     const container = new DocumentFragment();
     const offerId = offer.title.split(` `).join(`-`);
-    let input = document.createElement(`input`);
+    const input = document.createElement(`input`);
     input.type = `checkbox`;
     input.name = `offer`;
     input.classList.add(`point__offers-input`, `visually-hidden`);
     input.id = offerId;
     input.value = offerId;
     container.appendChild(input);
-    let label = document.createElement(`label`);
+    const label = document.createElement(`label`);
     label.htmlFor = offerId;
     label.classList.add(`point__offers-label`);
     label.innerHTML = `<span class="point__offer-service">${offer.title}</span> + ${offer.currency}<span class="point__offer-price">${offer.price}</span>`;
@@ -50,12 +49,29 @@ class TripItemForm {
     return container;
   }
 
-  $renderPhoto(photo) {
-    let img = document.createElement(`img`);
-    img.alt = `picture from place`;
-    img.classList.add(`point__destination-image`);
-    img.src = photo;
-    return img;
+  $renderOffers(offers) {
+    const container = this.$element.querySelector(`.point__offers-wrap`);
+    container.innerHTML = ``;
+    offers.forEach((offer) => {
+      container.appendChild(this.$renderOffer(offer));
+    });
+
+  }
+
+  $renderPhotos(photos) {
+    const container = this.$element.querySelector(`.point__destination-images`);
+    container.innerHTML = ``;
+    photos.forEach((photo) => {
+      const photoElement = document.createElement(`img`);
+      photoElement.alt = `picture from place`;
+      photoElement.classList.add(`point__destination-image`);
+      photoElement.src = photo;
+      container.appendChild(photoElement);
+    });
+  }
+
+  $renderElement(element, content, typeContent = `textContent`) {
+    this.$element.querySelector(element)[typeContent] = content;
   }
 
   render() {
@@ -63,26 +79,17 @@ class TripItemForm {
     const form = this.$element.querySelector(`form`);
     form.addEventListener(`submit`, this._submitHandler);
     form.addEventListener(`reset`, this._submitHandler);
-    this.$element.querySelector(`.point__destination-text`).textContent = this._tripItem.description;
-    this.$element.querySelectorAll(`.travel-way__select-input`).forEach((element) => {
-      element.checked = element.value.toLowerCase() === this._tripItem.type.toLowerCase();
+    this.$renderElement(`.point__destination-text`, this._tripItem.description);
+    this.$element.querySelectorAll(`.travel-way__select-input`).forEach((input) => {
+      input.checked = input.value.toLowerCase() === this._tripItem.type.toLowerCase();
     });
-    let timetable = this.$element.querySelector(`.point__time .point__input`);
     const timetableStart = `${this._tripItem.timetable.start.getHours()}:${this._tripItem.timetable.start.getMinutes().toString().padStart(2, `0`)}`;
     const timetableStop = `${this._tripItem.timetable.stop.getHours()}:${this._tripItem.timetable.stop.getMinutes().toString().padStart(2, `0`)}`;
-    timetable.value = `${timetableStart} — ${timetableStop}`;
-    this.$element.querySelector(`.point__price .point__price-currency`).innerHTML = this._tripItem.price.currency;
-    this.$element.querySelector(`.point__price .point__input`).value = this._tripItem.price.value;
-    const offerContainer = this.$element.querySelector(`.point__offers-wrap`);
-    offerContainer.innerHTML = ``;
-    this._tripItem.offers.forEach((offer) => {
-      offerContainer.appendChild(this.$renderOffer(offer));
-    });
-    let photoContainer = this.$element.querySelector(`.point__destination-images`);
-    photoContainer.innerHTML = ``;
-    this._tripItem.photos.forEach((url) => {
-      photoContainer.appendChild(this.$renderPhoto(url));
-    });
+    this.$renderElement(`.point__time .point__input`, `${timetableStart} — ${timetableStop}`, `value`);
+    this.$renderElement(`.point__price .point__price-currency`, this._tripItem.price.currency, `innerHTML`);
+    this.$renderElement(`.point__price .point__input`, this._tripItem.price.value, `value`);
+    this.$renderOffers(this._tripItem.offers);
+    this.$renderPhotos(this._tripItem.photos);
     return this.$element;
   }
 }
