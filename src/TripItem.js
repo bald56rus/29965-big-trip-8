@@ -1,19 +1,8 @@
-const TripItemIconMap = {
-  "Taxi": `🚕`,
-  "Bus": `🚌`,
-  "Train": `🚂`,
-  "Ship": `🛳️`,
-  "Transport": `🚊`,
-  "Drive": `🚗`,
-  "Flight": `✈️`,
-  "Check-in": `🏨`,
-  "Sightseeing": `🏛️`,
-  "Restaurant": `🍴`,
-};
+import TripItemBase from "./TripItemBase.js";
 
-class TripItem {
+class TripItem extends TripItemBase {
   constructor(tripItem) {
-    this._tripItem = tripItem;
+    super(tripItem);
     this._clickHandler = this._clickHandler.bind(this);
   }
 
@@ -31,34 +20,25 @@ class TripItem {
     this._onclick = handler;
   }
 
-  $renderElement(element, content, typeContent = `textContent`) {
-    this.$element.querySelector(element)[typeContent] = content;
+  $renderOffer(offer) {
+    const offerItem = document.createElement(`li`);
+    const offerBtn = document.createElement(`button`);
+    offerBtn.classList.add(`trip-point__offer`);
+    offerBtn.innerHTML = `${offer.title} +${offer.currency}&nbsp;${offer.price}`;
+    offerItem.appendChild(offerBtn);
+    return offerItem;
   }
 
-  $renderOffers(offers) {
+  renderCustomElements() {
     const container = this.$element.querySelector(`.trip-point__offers`);
-    const offerTemplate = document.querySelector(`#trip`).content.querySelector(`.trip-point__offers li`);
     container.innerHTML = ``;
-    offers.forEach((offer) => {
-      const offerElement = offerTemplate.cloneNode(true);
-      offerElement.innerHTML = `${offer.title} +${offer.currency}&nbsp;${offer.price}`;
-      container.appendChild(offerElement);
+    this._tripItem.offers.forEach((offer) => {
+      container.appendChild(this.$renderOffer(offer));
     });
   }
 
-  render() {
-    this.$element = this.template.cloneNode(true);
+  bindEventListeners() {
     this.$element.addEventListener(`click`, this._clickHandler);
-    this.$renderElement(`.trip-icon`, TripItemIconMap[this._tripItem.type]);
-    this.$renderElement(`.trip-point__title`, this._tripItem.title);
-    let timetable = this.$element.querySelector(`.trip-point__timetable`);
-    const timetableStart = `${this._tripItem.timetable.start.getHours()}:${this._tripItem.timetable.start.getMinutes().toString().padStart(2, `0`)}`;
-    const timetableStop = `${this._tripItem.timetable.stop.getHours()}:${this._tripItem.timetable.stop.getMinutes().toString().padStart(2, `0`)}`;
-    timetable.innerHTML = `${timetableStart}&nbsp;&mdash; ${timetableStop}`;
-    this.$renderElement(`.trip-point__duration`, `${Math.trunc(this._tripItem.duration / 60)}h ${this._tripItem.duration % 60}m`);
-    this.$renderElement(`.trip-point__price`, `${this._tripItem.price.currency}&nbsp;${this._tripItem.price.value}`, `innerHTML`);
-    this.$renderOffers(this._tripItem.offers);
-    return this.$element;
   }
 }
 

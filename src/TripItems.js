@@ -16,10 +16,23 @@ const tripDescriptions = [
 ];
 const tripOffers = [`Add luggage`, `Switch to comfort class`, `Add meal`, `Choose seats`];
 
+const TripItemIconMap = {
+  "Taxi": `🚕`,
+  "Bus": `🚌`,
+  "Train": `🚂`,
+  "Ship": `🛳️`,
+  "Transport": `🚊`,
+  "Drive": `🚗`,
+  "Flight": `✈️`,
+  "Check-in": `🏨`,
+  "Sightseeing": `🏛️`,
+  "Restaurant": `🍴`,
+};
+
 const generateTripItem = (timetableStart) => {
   let tripItem = {};
   let type = `${shuffleArray(tripTypes)[0]}`;
-  tripItem.type = type;
+  tripItem.icon = TripItemIconMap[type];
   tripItem.title = type;
   tripItem.description = shuffleArray(tripDescriptions).slice(0, getRandom(1, 3)).join(` `);
   let duration = getRandom(61, 120);

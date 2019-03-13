@@ -1,6 +1,8 @@
-class TripItemForm {
+import TripItemBase from "./TripItemBase.js";
+
+class TripItemForm extends TripItemBase {
   constructor(tripItem) {
-    this._tripItem = tripItem;
+    super(tripItem);
     this._submitHandler = this._submitHandler.bind(this);
     this._resetHandler = this._resetHandler.bind(this);
   }
@@ -70,27 +72,18 @@ class TripItemForm {
     });
   }
 
-  $renderElement(element, content, typeContent = `textContent`) {
-    this.$element.querySelector(element)[typeContent] = content;
-  }
-
-  render() {
-    this.$element = this.template.cloneNode(true);
+  bindEventListeners() {
     const form = this.$element.querySelector(`form`);
     form.addEventListener(`submit`, this._submitHandler);
     form.addEventListener(`reset`, this._submitHandler);
-    this.$renderElement(`.point__destination-text`, this._tripItem.description);
+  }
+
+  renderCustomElements() {
     this.$element.querySelectorAll(`.travel-way__select-input`).forEach((input) => {
-      input.checked = input.value.toLowerCase() === this._tripItem.type.toLowerCase();
+      input.checked = input.value.toLowerCase() === this._tripItem.title.toLowerCase();
     });
-    const timetableStart = `${this._tripItem.timetable.start.getHours()}:${this._tripItem.timetable.start.getMinutes().toString().padStart(2, `0`)}`;
-    const timetableStop = `${this._tripItem.timetable.stop.getHours()}:${this._tripItem.timetable.stop.getMinutes().toString().padStart(2, `0`)}`;
-    this.$renderElement(`.point__time .point__input`, `${timetableStart} — ${timetableStop}`, `value`);
-    this.$renderElement(`.point__price .point__price-currency`, this._tripItem.price.currency, `innerHTML`);
-    this.$renderElement(`.point__price .point__input`, this._tripItem.price.value, `value`);
     this.$renderOffers(this._tripItem.offers);
     this.$renderPhotos(this._tripItem.photos);
-    return this.$element;
   }
 }
 
