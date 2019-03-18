@@ -1,44 +1,22 @@
-import TripItemBase from "./TripItemBase.js";
+import Component from "./Component";
 
-class TripItem extends TripItemBase {
-  constructor(tripItem) {
-    super(tripItem);
-    this._clickHandler = this._clickHandler.bind(this);
+class TripItem extends Component {
+  constructor(viewModel) {
+    super(viewModel);
+    this.clickHandler = this.clickHandler.bind(this);
   }
 
   get template() {
     return document.querySelector(`#trip`).content.querySelector(`.trip-point`);
   }
 
-  _clickHandler() {
-    if (typeof this._onclick === `function`) {
-      this._onclick(this.$element, this._tripItem);
-    }
-  }
-
-  set onclick(handler) {
-    this._onclick = handler;
-  }
-
-  $renderOffer(offer) {
-    const offerItem = document.createElement(`li`);
-    const offerBtn = document.createElement(`button`);
-    offerBtn.classList.add(`trip-point__offer`);
-    offerBtn.innerHTML = `${offer.title} +${offer.currency}&nbsp;${offer.price}`;
-    offerItem.appendChild(offerBtn);
-    return offerItem;
-  }
-
-  renderCustomElements() {
-    const container = this.$element.querySelector(`.trip-point__offers`);
-    container.innerHTML = ``;
-    this._tripItem.offers.forEach((offer) => {
-      container.appendChild(this.$renderOffer(offer));
+  clickHandler() {
+    const clickEvent = new CustomEvent(`point-click`, {
+      'detail': {
+        element: this.$element, model: this.$viewModel
+      }
     });
-  }
-
-  bindEventListeners() {
-    this.$element.addEventListener(`click`, this._clickHandler);
+    this.$element.dispatchEvent(clickEvent);
   }
 }
 

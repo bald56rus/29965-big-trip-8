@@ -152,18 +152,17 @@
       </article>
 
       <div class="trip-day__items">
-        <article class="trip-point">
-          <i class="trip-icon">$icon</i>
-          <h3 class="trip-point__title">$title</h3>
+        <article class="trip-point" data-on="click:clickHandler">
+          <i class="trip-icon">{{icon}}</i>
+          <h3 class="trip-point__title">{{title}}</h3>
           <p class="trip-point__schedule">
-            <span class="trip-point__timetable">$timetable_start&nbsp;&mdash; $timetable_stop</span>
-            <span class="trip-point__duration">$timetable_duration</span>
+            <span class="trip-point__timetable">{{timetable.formattedStart}}&nbsp;&mdash;
+              {{timetable.formattedStop}}</span>
+            <span class="trip-point__duration">{{timetable.duration}}</span>
           </p>
-          <p class="trip-point__price">$currency&nbsp;$price</p>
+          <p class="trip-point__price">{{cost.currency}}&nbsp;{{cost.price}}</p>
           <ul class="trip-point__offers">
-            <li>
-              <button class="trip-point__offer">Order UBER +&euro;&nbsp;20</button>
-            </li>
+            <li data-for="offer in offers"></li>
           </ul>
         </article>
       </div>
@@ -171,7 +170,7 @@
   </template>
   <template id="trip-item-form">
     <article class="point">
-      <form action="" method="get">
+      <form action="" method="get" data-on="submit:submitHandler reset:submitHandler">
         <header class="point__header">
           <label class="point__date">
             choose day
@@ -179,7 +178,7 @@
           </label>
 
           <div class="travel-way">
-            <label class="travel-way__label" for="travel-way__toggle">$icon</label>
+            <label class="travel-way__label" for="travel-way__toggle">{{icon}}</label>
 
             <input type="checkbox" class="travel-way__toggle visually-hidden" id="travel-way__toggle">
 
@@ -228,14 +227,14 @@
 
           <label class="point__time">
             choose time
-            <input class="point__input" type="text" value="$timetable_start — $timetable_stop" name="time"
-              placeholder="00:00 — 00:00">
+            <input class="point__input" type="text" value="{{timetable.formattedStart}} — {{timetable.formattedStop}}"
+              name="time" placeholder="00:00 — 00:00">
           </label>
 
           <label class="point__price">
             write price
-            <span class="point__price-currency">$currency</span>
-            <input class="point__input" type="text" value="$price" name="price">
+            <span class="point__price-currency">{{cost.currency}}</span>
+            <input class="point__input" type="text" value="{{cost.price}}" name="price">
           </label>
 
           <div class="point__buttons">
@@ -254,25 +253,15 @@
             <h3 class="point__details-title">offers</h3>
 
             <div class="point__offers-wrap">
-              <input class="point__offers-input visually-hidden" type="checkbox" id="add-luggage" name="offer"
-                value="add-luggage">
-              <label for="add-luggage" class="point__offers-label">
-                <span class="point__offer-service">Add luggage</span> + €<span class="point__offer-price">30</span>
-              </label>
+              <template data-for="offer2 in offers"></template>
             </div>
 
           </section>
           <section class="point__destination">
             <h3 class="point__details-title">Destination</h3>
-            <p class="point__destination-text">$description</p>
+            <p class="point__destination-text">{{description}}</p>
             <div class="point__destination-images">
-              <img src="http://picsum.photos/330/140?r=123" alt="picture from place" class="point__destination-image">
-              <img src="http://picsum.photos/300/200?r=1234" alt="picture from place" class="point__destination-image">
-              <img src="http://picsum.photos/300/100?r=12345" alt="picture from place" class="point__destination-image">
-              <img src="http://picsum.photos/200/300?r=123456" alt="picture from place"
-                class="point__destination-image">
-              <img src="http://picsum.photos/100/300?r=1234567" alt="picture from place"
-                class="point__destination-image">
+              <photo data-for="photo in photos"></photo>
             </div>
           </section>
           <input type="hidden" class="point__total-price" name="total-price" value="">
