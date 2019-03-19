@@ -16,10 +16,23 @@ const tripDescriptions = [
 ];
 const tripOffers = [`Add luggage`, `Switch to comfort class`, `Add meal`, `Choose seats`];
 
+const TripItemIconMap = {
+  "Taxi": `🚕`,
+  "Bus": `🚌`,
+  "Train": `🚂`,
+  "Ship": `🛳️`,
+  "Transport": `🚊`,
+  "Drive": `🚗`,
+  "Flight": `✈️`,
+  "Check-in": `🏨`,
+  "Sightseeing": `🏛️`,
+  "Restaurant": `🍴`,
+};
+
 const generateTripItem = (timetableStart) => {
   let tripItem = {};
   let type = `${shuffleArray(tripTypes)[0]}`;
-  tripItem.type = type;
+  tripItem.icon = TripItemIconMap[type];
   tripItem.title = type;
   tripItem.description = shuffleArray(tripDescriptions).slice(0, getRandom(1, 3)).join(` `);
   let duration = getRandom(61, 120);
@@ -27,10 +40,24 @@ const generateTripItem = (timetableStart) => {
   timetableStop.setMinutes(timetableStop.getMinutes() + duration);
   tripItem.timetable = {
     start: new Date(timetableStart),
-    stop: new Date(timetableStop)
+    get formattedStart() {
+      return `${this.start.getHours()}:${this.start.getMinutes().toString().padStart(2, `0`)}`;
+    },
+    stop: new Date(timetableStop),
+    get formattedStop() {
+      return `${this.stop.getHours()}:${this.stop.getMinutes().toString().padStart(2, `0`)}`;
+    },
+    _duration: 0,
+    get duration() {
+      return `${Math.trunc(this._duration / 60)}h ${this._duration % 60}m`;
+    },
+    set duration(value) {
+      this._duration = value;
+    }
   };
-  tripItem.duration = duration;
-  tripItem.price = {currency: `&euro;`, value: getRandom(10, 100)};
+  tripItem.timetable.duration = duration;
+
+  tripItem.cost = {currency: `&euro;`, price: getRandom(10, 100)};
   let offers = shuffleArray(tripOffers)
     .slice(0, getRandom(0, 2))
     .map((offer) => {
@@ -40,7 +67,7 @@ const generateTripItem = (timetableStart) => {
   tripItem.photos = [];
   const photoCount = getRandom(1, 5);
   for (let i = 0; i < photoCount; i++) {
-    tripItem.photos.push(`http://picsum.photos/330/140?r=${getRandom(1, 1000)}`);
+    tripItem.photos.push({src: `http://picsum.photos/330/140?r=${getRandom(1, 1000)}`});
   }
   return tripItem;
 };
