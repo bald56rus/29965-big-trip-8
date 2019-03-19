@@ -7,17 +7,17 @@ class TripItemForm extends Component {
   }
 
   get template() {
-    return document.querySelector(`#trip-item-form`).content.querySelector(`.point`);
+    return document.querySelector(`#trip-item-form`).content.querySelector(`.point`).outerHTML;
   }
 
   submitHandler(evt) {
     evt.preventDefault();
     const submitEvent = new CustomEvent(`point-save`, {
       'detail': {
-        element: this.$element, model: this.$viewModel
+        element: this.$elementInstance, model: this.$viewModel
       }
     });
-    this.$element.dispatchEvent(submitEvent);
+    this.$elementInstance.dispatchEvent(submitEvent);
   }
 }
 

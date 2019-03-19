@@ -1,18 +1,12 @@
-class Offer {
+import Component from "./Component";
+
+class Offer extends Component {
   constructor(offer) {
-    this._offer = offer;
+    super(offer);
   }
 
   get template() {
-    let template = document.createElement(`template`);
-    template.innerHTML = `<li><button class="trip-point__offer">Order UBER +&euro;&nbsp;20</button></li>`;
-    return template.content.firstChild;
-  }
-
-  render() {
-    const element = this.template.cloneNode(true);
-    element.querySelector(`button`).innerHTML = `${this._offer.title} +${this._offer.currency}&nbsp;${this._offer.price}`;
-    return element;
+    return `<li><button class="trip-point__offer">{{title}} +{{currency}}&nbsp;{{price}}</button></li>`;
   }
 }
 

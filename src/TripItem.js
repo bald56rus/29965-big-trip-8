@@ -7,16 +7,16 @@ class TripItem extends Component {
   }
 
   get template() {
-    return document.querySelector(`#trip`).content.querySelector(`.trip-point`);
+    return document.querySelector(`#trip`).content.querySelector(`.trip-point`).outerHTML;
   }
 
   clickHandler() {
     const clickEvent = new CustomEvent(`point-click`, {
       'detail': {
-        element: this.$element, model: this.$viewModel
+        element: this.$elementInstance, model: this.$viewModel
       }
     });
-    this.$element.dispatchEvent(clickEvent);
+    this.$elementInstance.dispatchEvent(clickEvent);
   }
 }
 

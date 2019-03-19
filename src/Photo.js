@@ -1,18 +1,12 @@
-class Photo {
+import Component from "./Component";
+
+class Photo extends Component {
   constructor(photo) {
-    this._photo = photo;
+    super(photo);
   }
 
   get template() {
-    const template = document.createElement(`template`);
-    template.innerHTML = `<img src="" alt="picture from place" class="point__destination-image">`;
-    return template.content.firstChild;
-  }
-
-  render() {
-    const element = this.template.cloneNode(true);
-    element.src = this._photo.src;
-    return element;
+    return `<img src="{{src}}" alt="picture from place" class="point__destination-image">`;
   }
 }
 

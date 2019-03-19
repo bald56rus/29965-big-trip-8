@@ -43,27 +43,30 @@ class Component {
       return;
     }
     if (path.length === 0) {
-      this.$element.innerHTML = this.$element.innerHTML.replace(new RegExp(pattern, `gm`), node[property]);
+      this.$markupInstance = this.$markupInstance.replace(new RegExp(pattern, `gm`), node[property]);
       return;
     }
     this._render(pattern, path, node[property]);
   }
 
   render() {
-    this.$element = this.template.cloneNode(true);
-    this.bindEventListener(this.$element);
-    this.$element.innerHTML.match(/{{.*?}}/gm).forEach((pattern) => {
+    this.$markupInstance = this.template;
+    this.$markupInstance.match(/{{.*?}}/gm).forEach((pattern) => {
       const path = pattern.replace(/{{(.*)}}/, `$1`).split(`.`);
       this._render(pattern, path, this.$viewModel);
     });
-    this.$element.querySelectorAll(`[data-for]`).forEach((list) => {
+    const wrapper = document.createElement(`template`);
+    wrapper.innerHTML = this.$markupInstance;
+    this.$elementInstance = wrapper.content.querySelector(`*`);
+    this.$elementInstance.querySelectorAll(`[data-for]`).forEach((list) => {
       this.renderList(list);
     });
-    this.$element.querySelectorAll(`[data-on]`).forEach((element) => {
+    this.bindEventListener(this.$elementInstance);
+    this.$elementInstance.querySelectorAll(`[data-on]`).forEach((element) => {
       this.bindEventListener(element);
     })
     ;
-    return this.$element;
+    return this.$elementInstance;
   }
 
 }
