@@ -3,8 +3,15 @@ import {renderTemplate} from "./Utils";
 
 class Filter extends Component {
   constructor(model) {
-    model.id = `filter-${model.title.toLowerCase()}`;
     super(model);
+    const {id} = this._model;
+    if (id === undefined) {
+      Object.defineProperty(this._model, `id`, {
+        get() {
+          return `filter-${model.title.toLowerCase()}`;
+        }
+      });
+    }
     this.clickHandler = this.clickHandler.bind(this);
   }
 
@@ -13,7 +20,7 @@ class Filter extends Component {
       `<input type="radio" id="{{id}}" name="filter" value="{{title}}">
       <label class="trip-filter__item" for="{{id}}">{{title}}</label>`;
     const template = document.createElement(`template`);
-    template.innerHTML = renderTemplate(markup, this.$model);
+    template.innerHTML = renderTemplate(markup, this._model);
     return template.content;
   }
 

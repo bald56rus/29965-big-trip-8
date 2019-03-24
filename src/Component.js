@@ -3,7 +3,7 @@ class Component {
     if (new.target === Component) {
       throw new Error(`Can't instantiate Component, only concrete one.`);
     }
-    this.$model = model;
+    this._model = model;
   }
 
   get template() {
@@ -13,9 +13,9 @@ class Component {
   bind() { }
 
   render() {
-    this.$element = this.template;
+    this._element = this.template;
     this.bind();
-    return this.$element;
+    return this._element;
   }
 }
 

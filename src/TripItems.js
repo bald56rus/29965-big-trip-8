@@ -32,6 +32,7 @@ const TripItemIconMap = {
 const generateTripItem = (timetableStart) => {
   let tripItem = {};
   let type = `${shuffleArray(tripTypes)[0]}`;
+  tripItem.date = new Date();
   tripItem.icon = TripItemIconMap[type];
   tripItem.title = type;
   tripItem.description = shuffleArray(tripDescriptions).slice(0, getRandom(1, 3)).join(` `);

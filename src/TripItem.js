@@ -4,32 +4,34 @@ import moment from 'moment';
 
 class TripItem extends Component {
   constructor(model) {
-    if (typeof model.timetable.formattedStart === `undefined`) {
-      Object.defineProperty(model.timetable, `formattedStart`, {
+    super(model);
+    const {timetable} = this._model;
+    const {formattedStart, formattedStop, duration} = timetable;
+    if (formattedStart === undefined) {
+      Object.defineProperty(timetable, `formattedStart`, {
         get() {
-          return moment(model.timetable.start).format(`HH:mm`);
+          return moment(timetable.start).format(`HH:mm`);
         }
       });
     }
-    if (typeof model.timetable.formattedStop === `undefined`) {
-      Object.defineProperty(model.timetable, `formattedStop`, {
+    if (formattedStop === undefined) {
+      Object.defineProperty(timetable, `formattedStop`, {
         get() {
-          return moment(model.timetable.stop).format(`HH:mm`);
+          return moment(timetable.stop).format(`HH:mm`);
         }
       });
     }
-    if (typeof model.timetable.duration === `undefined`) {
-      Object.defineProperty(model.timetable, `duration`, {
+    if (duration === undefined) {
+      Object.defineProperty(timetable, `duration`, {
         get() {
-          const {start, stop} = model.timetable;
+          const {start, stop} = timetable;
           const hours = moment(stop).diff(start, `hours`);
           const minutes = moment(stop).diff(start, `minutes`);
           return `${hours}h ${minutes % 60}m`;
         }
       });
     }
-    super(model);
-    this.clickHandler = this.clickHandler.bind(this);
+    this._clickHandler = this._clickHandler.bind(this);
   }
 
   get template() {
@@ -38,9 +40,9 @@ class TripItem extends Component {
       .content
       .querySelector(`.trip-point`)
       .cloneNode(true);
-    template.innerHTML = renderTemplate(template.innerHTML, this.$model);
+    template.innerHTML = renderTemplate(template.innerHTML, this._model);
     const offerContainer = template.querySelector(`.trip-point__offers`);
-    this.$model.offers.map((offer) => {
+    this._model.offers.map((offer) => {
       const markup =
         `<li>
           <button class="trip-point__offer">{{title}} +&euro;&nbsp;{{price}}</button>
@@ -52,17 +54,18 @@ class TripItem extends Component {
     return template;
   }
 
-  clickHandler() {
-    const clickEvent = new CustomEvent(`point:click`, {
-      'detail': {
-        element: this.$element, model: this.$model
-      }
-    });
-    this.$element.dispatchEvent(clickEvent);
+  set onClick(handler) {
+    this._onCLick = handler;
+  }
+
+  _clickHandler() {
+    if (typeof this._onCLick === `function`) {
+      this._onCLick(this._element, this._model);
+    }
   }
 
   bind() {
-    this.$element.addEventListener(`click`, this.clickHandler);
+    this._element.addEventListener(`click`, this._clickHandler);
   }
 }
 

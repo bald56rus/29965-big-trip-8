@@ -11,18 +11,16 @@ const replaceElements = (original, replacement) => {
   original.parentNode.removeChild(original);
 };
 
-const submitHandler = (evt) => {
-  const {element: original, model} = evt.detail;
-  const replacement = new TripItem(model).render();
-  replacement.addEventListener(`point:click`, clickHandler);
-  replaceElements(original, replacement);
+const savePointHandler = (original, model) => {
+  const replacement = new TripItem(model);
+  replacement.onClick = clickPointHandler;
+  replaceElements(original, replacement.render());
 };
 
-const clickHandler = (evt) => {
-  const {element: original, model} = evt.detail;
-  const replacement = new TripItemForm(model).render();
-  replacement.addEventListener(`point:save`, submitHandler);
-  replaceElements(original, replacement);
+const clickPointHandler = (original, model) => {
+  const replacement = new TripItemForm(model);
+  replacement.onSave = savePointHandler;
+  replaceElements(original, replacement.render());
 };
 
 let init = () => {
@@ -34,9 +32,9 @@ let init = () => {
   tripItemsContainer.innerHTML = ``;
   generateTripItems()
     .forEach((tripItem) => {
-      const element = new TripItem(tripItem).render();
-      element.addEventListener(`point:click`, clickHandler);
-      tripItemsContainer.appendChild(element);
+      const element = new TripItem(tripItem);
+      element.onClick = clickPointHandler;
+      tripItemsContainer.appendChild(element.render());
     });
 };
 
