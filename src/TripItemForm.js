@@ -1,13 +1,14 @@
 import Component from "./Component";
 import {renderTemplate} from "./Utils";
 import flatpickr from 'flatpickr';
-import '../node_modules/flatpickr/dist/flatpickr.min.css';
+import 'flatpickr/dist/flatpickr.min.css';
 import {cloneDeep} from 'lodash';
 
 class TripItemForm extends Component {
   constructor(model) {
     super(model);
     this._saveHandler = this._saveHandler.bind(this);
+    this._deleteHandler = this._deleteHandler.bind(this);
   }
 
   get template() {
@@ -82,9 +83,20 @@ class TripItemForm extends Component {
     }
   }
 
+  set onDelete(handler) {
+    this._onDelete = handler;
+  }
+
+  _deleteHandler() {
+    if (typeof this._onDelete === `function`) {
+      this._onDelete(this._element);
+    }
+  }
+
   bind() {
     this._form = this._element.querySelector(`form`);
     this._form.addEventListener(`submit`, this._saveHandler);
+    this._form.addEventListener(`reset`, this._deleteHandler);
     const dataPicker = this._element.querySelector(`.point__date .point__input`);
     flatpickr(dataPicker, {dateFormat: `j M`});
   }

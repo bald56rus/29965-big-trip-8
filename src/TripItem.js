@@ -5,26 +5,24 @@ import moment from 'moment';
 class TripItem extends Component {
   constructor(model) {
     super(model);
-    const {timetable} = this._model;
-    const {formattedStart, formattedStop, duration} = timetable;
+    const {timetable, timetable: {start, formattedStart, stop, formattedStop, duration}} = this._model;
     if (formattedStart === undefined) {
       Object.defineProperty(timetable, `formattedStart`, {
         get() {
-          return moment(timetable.start).format(`HH:mm`);
+          return moment(start).format(`HH:mm`);
         }
       });
     }
     if (formattedStop === undefined) {
       Object.defineProperty(timetable, `formattedStop`, {
         get() {
-          return moment(timetable.stop).format(`HH:mm`);
+          return moment(stop).format(`HH:mm`);
         }
       });
     }
     if (duration === undefined) {
       Object.defineProperty(timetable, `duration`, {
         get() {
-          const {start, stop} = timetable;
           const hours = moment(stop).diff(start, `hours`);
           const minutes = moment(stop).diff(start, `minutes`);
           return `${hours}h ${minutes % 60}m`;
