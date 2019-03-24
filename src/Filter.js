@@ -1,28 +1,31 @@
-const container = document.querySelector(`.trip-filter`);
-const template = document.querySelector(`#filter`).content;
+import Component from "./Component";
+import {renderTemplate} from "./Utils";
 
-let createFilter = (filter) => {
-  let changeEvent = new CustomEvent(`filter-change`, {detail: filter});
-  let newFilter = template.cloneNode(true);
-  const filterId = `filter-${filter.toLowerCase()}`;
-  let input = newFilter.querySelector(`input`);
-  input.id = filterId;
-  input.value = filter.toLowerCase();
-  let label = newFilter.querySelector(`label`);
-  label.setAttribute(`for`, filterId);
-  label.textContent = filter;
-  input.addEventListener(`change`, () => {
-    document.dispatchEvent(changeEvent);
-  });
-  return newFilter;
-};
+class Filter extends Component {
+  constructor(model) {
+    super(model);
+    const {id} = this._model;
+    if (id === undefined) {
+      Object.defineProperty(this._model, `id`, {
+        get() {
+          return `filter-${model.title.toLowerCase()}`;
+        }
+      });
+    }
+    this.clickHandler = this.clickHandler.bind(this);
+  }
 
-let clearContainer = () => {
-  container.innerHTML = ``;
-};
+  get template() {
+    const markup =
+      `<input type="radio" id="{{id}}" name="filter" value="{{title}}">
+      <label class="trip-filter__item" for="{{id}}">{{title}}</label>`;
+    const template = document.createElement(`template`);
+    template.innerHTML = renderTemplate(markup, this._model);
+    return template.content;
+  }
 
-export {
-  container as filterContainer,
-  clearContainer as clearFilterContainer,
-  createFilter,
-};
+  clickHandler() { }
+
+}
+
+export default Filter;

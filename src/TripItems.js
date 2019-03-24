@@ -32,6 +32,7 @@ const TripItemIconMap = {
 const generateTripItem = (timetableStart) => {
   let tripItem = {};
   let type = `${shuffleArray(tripTypes)[0]}`;
+  tripItem.date = new Date();
   tripItem.icon = TripItemIconMap[type];
   tripItem.title = type;
   tripItem.description = shuffleArray(tripDescriptions).slice(0, getRandom(1, 3)).join(` `);
@@ -40,28 +41,14 @@ const generateTripItem = (timetableStart) => {
   timetableStop.setMinutes(timetableStop.getMinutes() + duration);
   tripItem.timetable = {
     start: new Date(timetableStart),
-    get formattedStart() {
-      return `${this.start.getHours()}:${this.start.getMinutes().toString().padStart(2, `0`)}`;
-    },
     stop: new Date(timetableStop),
-    get formattedStop() {
-      return `${this.stop.getHours()}:${this.stop.getMinutes().toString().padStart(2, `0`)}`;
-    },
-    _duration: 0,
-    get duration() {
-      return `${Math.trunc(this._duration / 60)}h ${this._duration % 60}m`;
-    },
-    set duration(value) {
-      this._duration = value;
-    }
   };
-  tripItem.timetable.duration = duration;
 
-  tripItem.cost = {currency: `&euro;`, price: getRandom(10, 100)};
+  tripItem.price = getRandom(10, 100);
   let offers = shuffleArray(tripOffers)
     .slice(0, getRandom(0, 2))
     .map((offer) => {
-      return {title: offer, currency: `&euro;`, price: `${getRandom(10, 100)}`};
+      return {title: offer, price: `${getRandom(10, 100)}`};
     });
   tripItem.offers = offers;
   tripItem.photos = [];

@@ -12,7 +12,33 @@ const shuffleArray = (source) => {
   return source;
 };
 
+function replacePatternString(template, patternString, model, path) {
+  if (path.length === 0) {
+    return template;
+  }
+  const propertyName = path.shift();
+  const property = model[propertyName];
+  if (!property) {
+    return template;
+  }
+  if (path.length === 0) {
+    template = template.replace(new RegExp(patternString, `gm`), property);
+    return template;
+  }
+  return replacePatternString(template, patternString, property, path);
+}
+
+const renderTemplate = (template, model) => {
+  template.match(/{{.*?}}/gm).forEach((patternString) => {
+    const path = patternString.replace(/{{(.*)}}/, `$1`).split(`.`);
+    template = replacePatternString(template, patternString, model, path);
+    replacePatternString(template, patternString, model, path);
+  });
+  return template;
+};
+
 export {
   getRandom,
-  shuffleArray
+  shuffleArray,
+  renderTemplate
 };
