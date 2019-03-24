@@ -1,33 +1,30 @@
 import Component from "./Component";
 import {renderTemplate} from './Utils';
+import moment from 'moment';
 
 class TripItem extends Component {
   constructor(model) {
     if (typeof model.timetable.formattedStart === `undefined`) {
       Object.defineProperty(model.timetable, `formattedStart`, {
         get() {
-          const hours = model.timetable.start.getHours();
-          const minutes = model.timetable.start.getMinutes();
-          return `${hours.toString().padStart(2, `0`)}:${minutes.toString().padStart(2, `0`)}`;
+          return moment(model.timetable.start).format(`HH:mm`);
         }
       });
     }
     if (typeof model.timetable.formattedStop === `undefined`) {
       Object.defineProperty(model.timetable, `formattedStop`, {
         get() {
-          const hours = model.timetable.stop.getHours();
-          const minutes = model.timetable.stop.getMinutes();
-          return `${hours.toString().padStart(2, `0`)}:${minutes.toString().padStart(2, `0`)}`;
+          return moment(model.timetable.stop).format(`HH:mm`);
         }
       });
     }
     if (typeof model.timetable.duration === `undefined`) {
       Object.defineProperty(model.timetable, `duration`, {
         get() {
-          const diff = (model.timetable.stop - model.timetable.start) / 60000;
-          const hours = Math.trunc(diff / 60);
-          const minutes = diff % 60;
-          return `${hours}h ${minutes.toString().padStart(2, `0`)}m`;
+          const {start, stop} = model.timetable;
+          const hours = moment(stop).diff(start, `hours`);
+          const minutes = moment(stop).diff(start, `minutes`);
+          return `${hours}h ${minutes % 60}m`;
         }
       });
     }

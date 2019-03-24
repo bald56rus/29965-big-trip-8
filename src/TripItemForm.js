@@ -1,5 +1,7 @@
 import Component from "./Component";
 import {renderTemplate} from "./Utils";
+import flatpickr from 'flatpickr';
+import '../node_modules/flatpickr/dist/flatpickr.min.css';
 
 class TripItemForm extends Component {
   constructor(model) {
@@ -14,6 +16,9 @@ class TripItemForm extends Component {
       .querySelector(`.point`)
       .cloneNode(true);
     template.innerHTML = renderTemplate(template.innerHTML, this.$model);
+    template.querySelectorAll(`.travel-way__select-input`).forEach((input) => {
+      input.checked = this.$model.title.toLowerCase() === input.value.toLowerCase();
+    });
     const offersContainer = template.querySelector(`.point__offers-wrap`);
     offersContainer.innerHTML = ``;
     this.$model.offers.map((offer) => {
@@ -43,8 +48,34 @@ class TripItemForm extends Component {
     return template;
   }
 
+  static createMapper(model) {
+    return {
+      price: (value) => (model.price = value),
+      time: (value) => {
+        const [start, stop] = value.match(/(\d+:\d+)/g);
+        const [startHours, startMinutes] = start.match(/\d+/g);
+        const [stopHours, stopMinutes] = stop.match(/\d+/g);
+        let diffHours = parseInt(startHours, 10) - model.timetable.start.getHours();
+        let diffMinutes = parseInt(startMinutes, 10) - model.timetable.start.getMinutes();
+        model.timetable.start = new Date(model.timetable.start.setHours(model.timetable.start.getHours() + diffHours));
+        model.timetable.start = new Date(model.timetable.start.setMinutes(model.timetable.start.getMinutes() + diffMinutes));
+        diffHours = parseInt(stopHours, 10) - model.timetable.stop.getHours();
+        diffMinutes = parseInt(stopMinutes, 10) - model.timetable.stop.getMinutes();
+        model.timetable.stop = new Date(model.timetable.stop.setHours(model.timetable.stop.getHours() + diffHours));
+        model.timetable.sttop = new Date(model.timetable.stop.setMinutes(model.timetable.stop.getMinutes() + diffMinutes));
+      }
+    };
+  }
+
   submitHandler(evt) {
     evt.preventDefault();
+    const formData = new FormData(this.$form);
+    const mapper = TripItemForm.createMapper(this.$model);
+    formData.forEach((value, property) => {
+      if (typeof mapper[property] !== `undefined`) {
+        mapper[property](value);
+      }
+    });
     const submitEvent = new CustomEvent(`point:save`, {
       'detail': {
         element: this.$element, model: this.$model
@@ -54,7 +85,10 @@ class TripItemForm extends Component {
   }
 
   bind() {
-    this.$element.querySelector(`form`).addEventListener(`click`, this.submitHandler);
+    this.$form = this.$element.querySelector(`form`);
+    this.$form.addEventListener(`submit`, this.submitHandler);
+    const dataPicker = this.$element.querySelector(`.point__date .point__input`);
+    flatpickr(dataPicker, {dateFormat: `j M`});
   }
 }
 
