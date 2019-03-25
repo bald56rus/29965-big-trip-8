@@ -138,10 +138,19 @@
     </section>
   </main>
 
-  <template id="filter">
-    <input type="radio" id="{{id}}" name="filter" value="everything">
-    <label class="trip-filter__item" for="{{id}}">{{title}}</label>
-  </template>
+  <section class="statistic content-wrap visually-hidden" id="stats">
+    <div class="statistic__item statistic__item--money">
+      <canvas class="statistic__money" width="900"></canvas>
+    </div>
+
+    <div class="statistic__item statistic__item--transport">
+      <canvas class="statistic__transport" width="900"></canvas>
+    </div>
+
+    <div class="statistic__item statistic__item--time-spend">
+      <canvas class="statistic__time-spend" width="900"></canvas>
+    </div>
+  </section>
 
   <template id="trip-point">
     <article class="trip-point">

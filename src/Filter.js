@@ -12,7 +12,7 @@ class Filter extends Component {
         }
       });
     }
-    this.clickHandler = this.clickHandler.bind(this);
+    this._clickHandler = this._clickHandler.bind(this);
   }
 
   get template() {
@@ -24,7 +24,19 @@ class Filter extends Component {
     return template.content;
   }
 
-  clickHandler() { }
+  set onClick(handler) {
+    this._onClick = handler;
+  }
+
+  _clickHandler() {
+    if (typeof this._onClick === `function`) {
+      this._onClick();
+    }
+  }
+
+  bind() {
+    this._element.querySelector(`label`).addEventListener(`click`, this._clickHandler);
+  }
 
 }
 
