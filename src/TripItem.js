@@ -1,44 +1,49 @@
 import Component from "./Component";
-import {renderTemplate} from './Utils';
+import { render } from './Utils';
 import moment from 'moment';
 
 class TripItem extends Component {
   constructor(model) {
     super(model);
-    const {timetable, timetable: {start, formattedStart, stop, formattedStop, duration}} = this._model;
+    this._clickHandler = this._clickHandler.bind(this);
+  }
+
+  _addFields(original) {
+    const modified = { ...original };
+    const { date_from, formattedStart, date_to, formattedStop, duration } = original;
     if (formattedStart === undefined) {
-      Object.defineProperty(timetable, `formattedStart`, {
+      Object.defineProperty(modified, `formattedStart`, {
         get() {
-          return moment(start).format(`HH:mm`);
+          return moment(new Date(date_from)).format(`HH:mm`);
         }
       });
     }
     if (formattedStop === undefined) {
-      Object.defineProperty(timetable, `formattedStop`, {
+      Object.defineProperty(modified, `formattedStop`, {
         get() {
-          return moment(stop).format(`HH:mm`);
+          return moment(new Date(date_to)).format(`HH:mm`);
         }
       });
     }
     if (duration === undefined) {
-      Object.defineProperty(timetable, `duration`, {
+      Object.defineProperty(modified, `duration`, {
         get() {
-          const hours = moment(stop).diff(start, `hours`);
-          const minutes = moment(stop).diff(start, `minutes`);
+          const hours = moment(new Date(date_to)).diff(new Date(date_from), `hours`);
+          const minutes = moment(new Date(date_to)).diff(new Date(date_from), `minutes`);
           return `${hours}h ${minutes % 60}m`;
         }
       });
     }
-    this._clickHandler = this._clickHandler.bind(this);
+    return modified;
   }
 
   get template() {
     const template = document
-      .querySelector(`#trip-point`)
+      .getElementById(`trip-point`)
       .content
       .querySelector(`.trip-point`)
       .cloneNode(true);
-    template.innerHTML = renderTemplate(template.innerHTML, this._model);
+    template.innerHTML = render(template.innerHTML, this._addFields(this._model));
     const offerContainer = template.querySelector(`.trip-point__offers`);
     this._model.offers.map((offer) => {
       const markup =
@@ -46,7 +51,7 @@ class TripItem extends Component {
           <button class="trip-point__offer">{{title}} +&euro;&nbsp;{{price}}</button>
         </li>`;
       const element = document.createElement(`template`);
-      element.innerHTML = renderTemplate(markup, offer);
+      element.innerHTML = render(markup, offer);
       return element.content;
     }).forEach((offer) => offerContainer.appendChild(offer));
     return template;

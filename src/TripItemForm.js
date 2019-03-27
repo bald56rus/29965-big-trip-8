@@ -1,5 +1,5 @@
 import Component from "./Component";
-import {renderTemplate} from "./Utils";
+import {render} from "./Utils";
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 import {cloneDeep} from 'lodash';
@@ -13,11 +13,11 @@ class TripItemForm extends Component {
 
   get template() {
     const template = document
-      .querySelector(`#trip-item-form`)
+      .getElementById(`trip-item-form`)
       .content
       .querySelector(`.point`)
       .cloneNode(true);
-    template.innerHTML = renderTemplate(template.innerHTML, this._model);
+    template.innerHTML = render(template.innerHTML, this._model);
     template.querySelectorAll(`.travel-way__select-input`).forEach((input) => {
       input.checked = this._model.title.toLowerCase() === input.value.toLowerCase();
     });
@@ -34,7 +34,7 @@ class TripItemForm extends Component {
           <span class="point__offer-price">{{price}}</span>
         </label>`;
       const element = document.createElement(`template`);
-      element.innerHTML = renderTemplate(markup, offer);
+      element.innerHTML = render(markup, offer);
       return element.content;
     })
       .forEach((offer) => offersContainer.appendChild(offer));
@@ -43,7 +43,7 @@ class TripItemForm extends Component {
     this._model.photos.map((photo) => {
       const markup = `<img src="{{src}}" alt="picture from place" class="point__destination-image">`;
       const element = document.createElement(`template`);
-      element.innerHTML = renderTemplate(markup, photo);
+      element.innerHTML = render(markup, photo);
       return element.content;
     })
       .forEach((photo) => photosContainer.appendChild(photo));

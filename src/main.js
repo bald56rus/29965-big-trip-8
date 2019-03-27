@@ -7,11 +7,11 @@ import Stats from './Stats';
 const PointFilter = {
   'Everything': () => true,
   'Future': (point) => point.date > new Date(),
-  'Past': (point) => point.date < new Date()
+  'Past': (point) => point.date <= new Date()
 };
 const content = {
-  '#table': document.querySelector(`#table`),
-  '#stats': document.querySelector(`#stats`)
+  '#table': document.getElementById(`table`),
+  '#stats': document.getElementById(`stats`)
 };
 let activeBlock = content[`#table`];
 
@@ -65,34 +65,46 @@ const renderPoints = (pointList) => {
   });
 };
 
+const statsReducer = (accumulator, current) => {
+  const key = `${current.icon} ${current.title}`;
+  let property = accumulator[key];
+  if (property) {
+    property.totalPrice += current.price;
+    property.totalCount += 1;
+  } else {
+    accumulator[key] = {totalPrice: current.price, totalCount: 1};
+  }
+  return accumulator;
+};
+
 const renderStats = (pointList) => {
-  const transports = [`🚕 Taxi`, `🚌 Bus`, `🚂 Train`, `🛳 Ship`, `🚊 Transport`, `🚗 Drive`, `✈ Flight`];
   const BAR_HEIGHT = 55;
-  moneyCtx.height = BAR_HEIGHT * 6;
-  transportCtx.height = BAR_HEIGHT * 4;
-  const grouped = pointList.reduce((accumulator, current) => {
-    const key = `${current.icon} ${current.title}`;
-    let property = accumulator[key];
-    if (property) {
-      property.totalPrice += current.price;
-      property.totalCount += 1;
-    } else {
-      accumulator[key] = {totalPrice: current.price, totalCount: 1};
-    }
-    return accumulator;
-  }, {});
-  const moneyDataset = {};
-  const transportDataset = {};
-  Object.keys(grouped).forEach((key) => {
-    moneyDataset[key] = grouped[key].totalPrice;
+  const transports = [`🚕 Taxi`, `🚌 Bus`, `🚂 Train`, `🛳 Ship`, `🚊 Transport`, `🚗 Drive`, `✈ Flight`];
+  const moneyStats = {};
+  const transportStats = {};
+  const summaryStats = pointList.reduce(statsReducer, {});
+  Object.keys(summaryStats).forEach((key) => {
+    moneyStats[key] = summaryStats[key].totalPrice;
     if (transports.includes(key)) {
-      transportDataset[key] = grouped[key].totalCount;
+      transportStats[key] = summaryStats[key].totalCount;
     }
   });
-  const moneyChartFormatter = (value) => `€ ${value}`;
-  const transportChartFormatter = (value) => `${value}x`;
-  new Stats(`MONEY`, moneyCtx, moneyDataset, moneyChartFormatter).render();
-  new Stats(`TRANSPORT`, transportCtx, transportDataset, transportChartFormatter).render();
+  moneyCtx.height = BAR_HEIGHT * Object.keys(moneyStats).length;
+  transportCtx.height = BAR_HEIGHT * Object.keys(transportStats).length;
+  const moneyChartCfg = {
+    chartTitle: `MONEY`,
+    canvas: moneyCtx,
+    dataset: moneyStats,
+    formatter: (value) => `€ ${value}`
+  };
+  new Stats(moneyChartCfg).render();
+  const transportChartCfg = {
+    chartTitle: `TRANSPORT`,
+    canvas: transportCtx,
+    dataset: transportStats,
+    formatter: (value) => `${value}x`
+  };
+  new Stats(transportChartCfg).render();
 };
 
 const renderFilters = () => {

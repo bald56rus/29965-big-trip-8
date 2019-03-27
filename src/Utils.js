@@ -12,33 +12,38 @@ const shuffleArray = (source) => {
   return source;
 };
 
-function replacePatternString(template, patternString, model, path) {
+function getProperty(model, path) {
   if (path.length === 0) {
-    return template;
+    return undefined;
   }
-  const propertyName = path.shift();
+  const [propertyName, ...sub] = path;
   const property = model[propertyName];
   if (!property) {
-    return template;
+    return undefined;
   }
-  if (path.length === 0) {
-    template = template.replace(new RegExp(patternString, `gm`), property);
-    return template;
+  if (sub.length === 0) {
+    return property;
   }
-  return replacePatternString(template, patternString, property, path);
+  return getProperty(property, sub);
 }
 
-const renderTemplate = (template, model) => {
-  template.match(/{{.*?}}/gm).forEach((patternString) => {
-    const path = patternString.replace(/{{(.*)}}/, `$1`).split(`.`);
-    template = replacePatternString(template, patternString, model, path);
-    replacePatternString(template, patternString, model, path);
-  });
-  return template;
-};
+function _render(template, patterns, model) {
+  if (patterns.length === 0) {
+    return template;
+  }
+  const [pattern, ...tail] = patterns;
+  const property = getProperty(model, pattern.substring(2, pattern.length - 2).split(`.`));
+  if (!property) {
+    return _render(template, tail, model);
+  }
+  template = template.replace(new RegExp(pattern, `gm`), property);
+  return _render(template, tail, model);
+}
+
+const render = (template, model) => _render(template, [...new Set(template.match(/{{.*?}}/gm))], model);
 
 export {
   getRandom,
   shuffleArray,
-  renderTemplate
+  render
 };
