@@ -1,13 +1,14 @@
-import generateTripItems from './TripItems';
 import Filter from './Filter';
 import TripItem from './TripItem';
 import TripItemForm from './TripItemForm';
 import Stats from './Stats';
+import ApiProvider from './ApiProvider';
+import DependenciesContainer from './DependenciesContainer';
 
 const PointFilter = {
   'Everything': () => true,
-  'Future': (point) => point.date > new Date(),
-  'Past': (point) => point.date <= new Date()
+  'Future': (point) => point.date_from > new Date(),
+  'Past': (point) => point.date_to <= new Date()
 };
 const content = {
   '#table': document.getElementById(`table`),
@@ -20,7 +21,26 @@ const contentSwitches = document.querySelectorAll(`.view-switch__item`);
 const pointsContainer = document.querySelector(`.trip-day__items`);
 const moneyCtx = document.querySelector(`.statistic__money`);
 const transportCtx = document.querySelector(`.statistic__transport`);
+const TypeIconMap = {
+  "Taxi": `🚕`,
+  "Bus": `🚌`,
+  "Train": `🚂`,
+  "Ship": `🛳️`,
+  "Transport": `🚊`,
+  "Drive": `🚗`,
+  "Flight": `✈️`,
+  "Check-in": `🏨`,
+  "Sightseeing": `🏛️`,
+  "Restaurant": `🍴`,
+};
+const depenendencies = new DependenciesContainer();
+depenendencies.register(`type-icon-map`, TypeIconMap);
 let points = [];
+const apiProvider = new ApiProvider({
+  prefixUrl: `https://es8-demo-srv.appspot.com/big-trip`,
+  headers: {'Authorization': `Basic eo0w590ik29889b`}
+});
+depenendencies.register(`apiProvider`, apiProvider);
 
 const toggleVisibleContent = (evt) => {
   evt.preventDefault();
@@ -66,20 +86,20 @@ const renderPoints = (pointList) => {
 };
 
 const statsReducer = (accumulator, current) => {
-  const key = `${current.icon} ${current.title}`;
+  const key = `${current.type}`;
   let property = accumulator[key];
   if (property) {
-    property.totalPrice += current.price;
+    property.totalPrice += current.base_price;
     property.totalCount += 1;
   } else {
-    accumulator[key] = {totalPrice: current.price, totalCount: 1};
+    accumulator[key] = {totalPrice: current.base_price, totalCount: 1};
   }
   return accumulator;
 };
 
 const renderStats = (pointList) => {
   const BAR_HEIGHT = 55;
-  const transports = [`🚕 Taxi`, `🚌 Bus`, `🚂 Train`, `🛳 Ship`, `🚊 Transport`, `🚗 Drive`, `✈ Flight`];
+  const transports = [`Taxi`, `Bus`, `Train`, `Ship`, `Transport`, `Drive`, `Flight`].map((x) => x.toLowerCase());
   const moneyStats = {};
   const transportStats = {};
   const summaryStats = pointList.reduce(statsReducer, {});
@@ -119,13 +139,20 @@ const renderFilters = () => {
 };
 
 let init = () => {
-  contentSwitches.forEach((element) => {
-    element.addEventListener(`click`, toggleVisibleContent);
+  apiProvider.getDestinations().then((destinations) => {
+    depenendencies.register(`destinations`, destinations);
   });
+  apiProvider.getOffers().then((offers) => {
+    depenendencies.register(`offers`, offers);
+  });
+  apiProvider.getPoints().then((pointList) => {
+    points = pointList;
+    renderStats(points);
+    renderPoints(points);
+  });
+  contentSwitches.forEach((element) => element.addEventListener(`click`, toggleVisibleContent));
   renderFilters();
-  points = generateTripItems();
-  renderPoints(points);
-  renderStats(points);
+
 };
 
 init();
