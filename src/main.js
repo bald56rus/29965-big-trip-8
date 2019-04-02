@@ -10,28 +10,28 @@ const PointFilter = {
   'Future': (point) => point.date_from > new Date(),
   'Past': (point) => point.date_to <= new Date()
 };
-const content = {
+const container = {
   '#table': document.getElementById(`table`),
   '#stats': document.getElementById(`stats`)
 };
-let activeBlock = content[`#table`];
+let activeContainer = container[`#table`];
 
 const filterContainer = document.querySelector(`.trip-filter`);
 const contentSwitches = document.querySelectorAll(`.view-switch__item`);
-const pointsContainer = document.querySelector(`.trip-day__items`);
+let pointsContainer = null;
 const moneyCtx = document.querySelector(`.statistic__money`);
 const transportCtx = document.querySelector(`.statistic__transport`);
 const TypeIconMap = {
-  "Taxi": `🚕`,
-  "Bus": `🚌`,
-  "Train": `🚂`,
-  "Ship": `🛳️`,
-  "Transport": `🚊`,
-  "Drive": `🚗`,
-  "Flight": `✈️`,
-  "Check-in": `🏨`,
-  "Sightseeing": `🏛️`,
-  "Restaurant": `🍴`,
+  "taxi": `🚕`,
+  "bus": `🚌`,
+  "train": `🚂`,
+  "ship": `🛳️`,
+  "transport": `🚊`,
+  "drive": `🚗`,
+  "flight": `✈️`,
+  "check-in": `🏨`,
+  "sightseeing": `🏛️`,
+  "restaurant": `🍴`,
 };
 const depenendencies = new DependenciesContainer();
 depenendencies.register(`type-icon-map`, TypeIconMap);
@@ -40,6 +40,7 @@ const apiProvider = new ApiProvider({
   prefixUrl: `https://es8-demo-srv.appspot.com/big-trip`,
   headers: {'Authorization': `Basic eo0w590ik29889b`}
 });
+
 depenendencies.register(`apiProvider`, apiProvider);
 
 const toggleVisibleContent = (evt) => {
@@ -49,9 +50,9 @@ const toggleVisibleContent = (evt) => {
     switchElement.classList.remove(`view-switch__item--active`);
   });
   element.classList.add(`view-switch__item--active`);
-  activeBlock.classList.add(`visually-hidden`);
-  activeBlock = content[element.getAttribute(`href`)];
-  activeBlock.classList.remove(`visually-hidden`);
+  activeContainer.classList.add(`visually-hidden`);
+  activeContainer = container[element.getAttribute(`href`)];
+  activeContainer.classList.remove(`visually-hidden`);
 };
 
 const replaceElements = (original, replacement) => {
@@ -59,13 +60,21 @@ const replaceElements = (original, replacement) => {
   original.parentNode.removeChild(original);
 };
 
+const removePoint = ({id}) => {
+  const point = points.find((p) => p.id === id);
+  points.splice(points.indexOf(point), 1);
+};
+
 const savePointHandler = (original, model) => {
+  removePoint(model);
+  points.push(model);
   const replacement = new TripItem(model);
   replacement.onClick = clickPointHandler;
   replaceElements(original, replacement.render());
 };
 
-const deletePointHandler = (element) => {
+const deletePointHandler = (element, model) => {
+  removePoint(model);
   element.parentNode.removeChild(element);
 };
 
@@ -138,18 +147,21 @@ const renderFilters = () => {
   });
 };
 
-let init = () => {
-  apiProvider.getDestinations().then((destinations) => {
-    depenendencies.register(`destinations`, destinations);
-  });
-  apiProvider.getOffers().then((offers) => {
-    depenendencies.register(`offers`, offers);
-  });
-  apiProvider.getPoints().then((pointList) => {
-    points = pointList;
-    renderStats(points);
-    renderPoints(points);
-  });
+const init = () => {
+  const originalContainer = activeContainer.cloneNode(true);
+  activeContainer.innerHTML = `Loading route...`;
+  apiProvider.getDestinations().then((destinations) => depenendencies.register(`destinations`, destinations));
+  apiProvider.getOffers().then((offers) => depenendencies.register(`offers`, offers));
+  apiProvider.getPoints()
+    .then((loadedPoints) => {
+      points = loadedPoints;
+      replaceElements(activeContainer, originalContainer);
+      activeContainer = originalContainer;
+      pointsContainer = originalContainer.querySelector(`.trip-day__items`);
+      renderStats(points);
+      renderPoints(points);
+    })
+    .catch((error) => (activeContainer.innerHTML = error.message));
   contentSwitches.forEach((element) => element.addEventListener(`click`, toggleVisibleContent));
   renderFilters();
 

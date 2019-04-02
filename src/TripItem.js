@@ -1,6 +1,7 @@
 import Component from "./Component";
-import { render } from './Utils';
+import {cloneDeep} from 'lodash';
 import moment from 'moment';
+import {render} from './Utils';
 
 class TripItem extends Component {
   constructor(model) {
@@ -8,33 +9,35 @@ class TripItem extends Component {
     this._clickHandler = this._clickHandler.bind(this);
   }
 
-  _addFields(original) {
-    const modified = { ...original };
-    const { date_from, formattedStart, date_to, formattedStop, duration } = original;
-    if (formattedStart === undefined) {
-      Object.defineProperty(modified, `formattedStart`, {
+  _defineServiceFields(model) {
+    const mappedModel = cloneDeep(model);
+    const {date_from: dateFrom, date_to: dateTo} = mappedModel;
+    Object.defineProperties(mappedModel, {
+      'formattedStart': {
         get() {
-          return moment(new Date(date_from)).format(`HH:mm`);
+          return moment(dateFrom).format(`HH:mm`);
         }
-      });
-    }
-    if (formattedStop === undefined) {
-      Object.defineProperty(modified, `formattedStop`, {
+      },
+      'formattedStop': {
         get() {
-          return moment(new Date(date_to)).format(`HH:mm`);
+          return moment(dateTo).format(`HH:mm`);
         }
-      });
-    }
-    if (duration === undefined) {
-      Object.defineProperty(modified, `duration`, {
+      },
+      'duration': {
         get() {
-          const hours = moment(new Date(date_to)).diff(new Date(date_from), `hours`);
-          const minutes = moment(new Date(date_to)).diff(new Date(date_from), `minutes`);
-          return `${hours}h ${minutes % 60}m`;
+          let result = ``;
+          const duration = moment.duration(moment(dateTo).diff(dateFrom));
+          const days = duration.get(`days`);
+          result += days > 0 ? days.toString().padStart(2, `0`).concat(`D `) : ``;
+          const hours = duration.get(`hours`);
+          result += hours > 0 ? hours.toString().padStart(2, `0`).concat(`H `) : ``;
+          const minutes = duration.get(`minutes`);
+          result += minutes.toString().padStart(2, `0`).concat(`M`);
+          return result;
         }
-      });
-    }
-    return modified;
+      }
+    });
+    return mappedModel;
   }
 
   get template() {
@@ -43,7 +46,7 @@ class TripItem extends Component {
       .content
       .querySelector(`.trip-point`)
       .cloneNode(true);
-    template.innerHTML = render(template.innerHTML, this._addFields(this._model));
+    template.innerHTML = render(template.innerHTML, this._defineServiceFields(this._model));
     const offerContainer = template.querySelector(`.trip-point__offers`);
     this._model.offers.map((offer) => {
       const markup =
