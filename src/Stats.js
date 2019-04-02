@@ -2,16 +2,17 @@ import Chart from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 class Stats {
-  constructor(chartTitle, canvas, dataset, formatter) {
-    this._chartTitle = chartTitle;
-    this._canvas = canvas;
+  constructor(chartConfig) {
+    this._chartTitle = chartConfig.chartTitle;
+    this._canvas = chartConfig.canvas;
     this._labels = [];
     this._data = [];
+    this._formatter = chartConfig.formatter;
+    const {dataset} = chartConfig;
     Object.keys(dataset).forEach((label) => {
       this._labels.push(label);
       this._data.push(dataset[label]);
     });
-    this._formatter = formatter;
   }
 
   render() {

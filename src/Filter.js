@@ -1,5 +1,5 @@
 import Component from "./Component";
-import {renderTemplate} from "./Utils";
+import {render} from "./Utils";
 
 class Filter extends Component {
   constructor(model) {
@@ -20,7 +20,7 @@ class Filter extends Component {
       `<input type="radio" id="{{id}}" name="filter" value="{{title}}">
       <label class="trip-filter__item" for="{{id}}">{{title}}</label>`;
     const template = document.createElement(`template`);
-    template.innerHTML = renderTemplate(markup, this._model);
+    template.innerHTML = render(markup, this._model);
     return template.content;
   }
 

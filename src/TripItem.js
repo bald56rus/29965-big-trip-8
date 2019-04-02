@@ -1,44 +1,52 @@
 import Component from "./Component";
-import {renderTemplate} from './Utils';
+import {cloneDeep} from 'lodash';
 import moment from 'moment';
+import {render} from './Utils';
 
 class TripItem extends Component {
   constructor(model) {
     super(model);
-    const {timetable, timetable: {start, formattedStart, stop, formattedStop, duration}} = this._model;
-    if (formattedStart === undefined) {
-      Object.defineProperty(timetable, `formattedStart`, {
-        get() {
-          return moment(start).format(`HH:mm`);
-        }
-      });
-    }
-    if (formattedStop === undefined) {
-      Object.defineProperty(timetable, `formattedStop`, {
-        get() {
-          return moment(stop).format(`HH:mm`);
-        }
-      });
-    }
-    if (duration === undefined) {
-      Object.defineProperty(timetable, `duration`, {
-        get() {
-          const hours = moment(stop).diff(start, `hours`);
-          const minutes = moment(stop).diff(start, `minutes`);
-          return `${hours}h ${minutes % 60}m`;
-        }
-      });
-    }
     this._clickHandler = this._clickHandler.bind(this);
+  }
+
+  _defineServiceFields(model) {
+    const mappedModel = cloneDeep(model);
+    const {date_from: dateFrom, date_to: dateTo} = mappedModel;
+    Object.defineProperties(mappedModel, {
+      'formattedStart': {
+        get() {
+          return moment(dateFrom).format(`HH:mm`);
+        }
+      },
+      'formattedStop': {
+        get() {
+          return moment(dateTo).format(`HH:mm`);
+        }
+      },
+      'duration': {
+        get() {
+          let result = ``;
+          const duration = moment.duration(moment(dateTo).diff(dateFrom));
+          const days = duration.get(`days`);
+          result += days > 0 ? days.toString().padStart(2, `0`).concat(`D `) : ``;
+          const hours = duration.get(`hours`);
+          result += hours > 0 ? hours.toString().padStart(2, `0`).concat(`H `) : ``;
+          const minutes = duration.get(`minutes`);
+          result += minutes.toString().padStart(2, `0`).concat(`M`);
+          return result;
+        }
+      }
+    });
+    return mappedModel;
   }
 
   get template() {
     const template = document
-      .querySelector(`#trip-point`)
+      .getElementById(`trip-point`)
       .content
       .querySelector(`.trip-point`)
       .cloneNode(true);
-    template.innerHTML = renderTemplate(template.innerHTML, this._model);
+    template.innerHTML = render(template.innerHTML, this._defineServiceFields(this._model));
     const offerContainer = template.querySelector(`.trip-point__offers`);
     this._model.offers.map((offer) => {
       const markup =
@@ -46,7 +54,7 @@ class TripItem extends Component {
           <button class="trip-point__offer">{{title}} +&euro;&nbsp;{{price}}</button>
         </li>`;
       const element = document.createElement(`template`);
-      element.innerHTML = renderTemplate(markup, offer);
+      element.innerHTML = render(markup, offer);
       return element.content;
     }).forEach((offer) => offerContainer.appendChild(offer));
     return template;
