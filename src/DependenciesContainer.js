@@ -1,6 +1,6 @@
 let instance = null;
 
-class Dependencies {
+class DependenciesContainer {
   constructor() {
     if (instance !== null) {
       return instance;
@@ -14,4 +14,4 @@ class Dependencies {
 
 }
 
-export default Dependencies;
+export default DependenciesContainer;

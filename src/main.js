@@ -37,7 +37,7 @@ const depenendencies = new DependenciesContainer();
 depenendencies.register(`type-icon-map`, TypeIconMap);
 let points = [];
 const apiProvider = new ApiProvider({
-  prefixUrl: `https://es8-demo-srv.appspot.com/big-trip`,
+  baseUrl: `https://es8-demo-srv.appspot.com/big-trip`,
   headers: {'Authorization': `Basic eo0w590ik29889b`}
 });
 
@@ -60,13 +60,12 @@ const replaceElements = (original, replacement) => {
   original.parentNode.removeChild(original);
 };
 
-const removePoint = ({id}) => {
-  const point = points.find((p) => p.id === id);
-  points.splice(points.indexOf(point), 1);
+const removePoint = (savedPoints, {id}) => {
+  return savedPoints.filter((point) => point.id !== id);
 };
 
 const savePointHandler = (original, model) => {
-  removePoint(model);
+  points = removePoint(points, model);
   points.push(model);
   const replacement = new TripItem(model);
   replacement.onClick = clickPointHandler;
@@ -74,7 +73,7 @@ const savePointHandler = (original, model) => {
 };
 
 const deletePointHandler = (element, model) => {
-  removePoint(model);
+  points = removePoint(points, model);
   element.parentNode.removeChild(element);
 };
 

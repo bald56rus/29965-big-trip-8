@@ -42,7 +42,7 @@ class TripItemForm extends Component {
     const offersContainer = template.querySelector(`.point__offers-wrap`);
     offersContainer.innerHTML = ``;
     offers.map((offer) => {
-      const id = offer.title.split(` `).map((w) => w.toLowerCase()).join(`-`);
+      const id = offer.title.split(` `).map((word) => word.toLowerCase()).join(`-`);
       const markup =
         `<input class="point__offers-input visually-hidden" type="checkbox" id="${id}" name="offer" value="${offer.title}" ${offer.accepted ? `checked` : ``}>
         <label for="${id}" class="point__offers-label">
@@ -131,13 +131,9 @@ class TripItemForm extends Component {
           mapper[property](value);
         }
       });
-      this._apiProvider.savePoint(model).then((response) => {
-        if (response.ok) {
-          this._onSave(this._element, model);
-        } else {
-          this._errorApiHandler();
-        }
-      }).catch(() => this._errorApiHandler());
+      this._apiProvider.savePoint(model)
+        .then(() => (this._onSave(this._element, model)))
+        .catch(() => this._errorApiHandler());
     }
   }
 
