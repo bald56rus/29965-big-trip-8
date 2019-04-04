@@ -32,10 +32,7 @@ function _render(template, patterns, model) {
     return template;
   }
   const [pattern, ...tail] = patterns;
-  const property = getProperty(model, pattern.substring(2, pattern.length - 2).split(`.`));
-  if (!property) {
-    return _render(template, tail, model);
-  }
+  const property = getProperty(model, pattern.substring(2, pattern.length - 2).split(`.`)) || ``;
   template = template.replace(new RegExp(pattern, `gm`), property);
   return _render(template, tail, model);
 }

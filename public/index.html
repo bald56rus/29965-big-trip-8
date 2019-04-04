@@ -213,21 +213,22 @@
 
           <div class="point__destination-wrap">
             <label class="point__destination-label" for="destination">Flight to</label>
-            <input class="point__destination-input" list="destination-select" id="destination"
+            <input class="point__destination-input" list="destination-select" id="destination" required
               value="{{destination.name}}" name="destination">
             <datalist id="destination-select"></datalist>
           </div>
 
           <div class="point__time">
             choose time
-            <input class="point__input" type="text" value="{{date_from}}" name="date-start" placeholder="19:00">
-            <input class="point__input" type="text" value="{{date_to}}" name="date-end" placeholder="21:00">
+            <input class="point__input" type="text" value="{{date_from}}" required name="date-start"
+              placeholder="19:00">
+            <input class="point__input" type="text" value="{{date_to}}" required name="date-end" placeholder="21:00">
           </div>
 
           <label class="point__price">
             write price
             <span class="point__price-currency">&euro;</span>
-            <input class="point__input" type="text" value="{{base_price}}" name="price">
+            <input class="point__input" type="number" required value="{{base_price}}" name="price">
           </label>
 
           <div class="point__buttons">

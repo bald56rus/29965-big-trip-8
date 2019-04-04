@@ -12,6 +12,7 @@ class ApiProvider {
     this._baseUrl = options.baseUrl;
     this._headers = new Headers(options.headers);
     this._dependencies = new Dependencies();
+    this._icons = this._dependencies[`icons`];
   }
 
   getPoints() {
@@ -25,27 +26,27 @@ class ApiProvider {
   }
   _fromServer(model) {
     const mappedModel = cloneDeep(model);
-    mappedModel.icon = this._dependencies[`type-icon-map`][mappedModel.type];
+    mappedModel.icon = this._icons[mappedModel.type];
     return mappedModel;
   }
   getDestinations() {
     return this._http(`destinations`, RequestMethod.GET)
-    .then((response) => {
-      return response.json();
-    });
+      .then((response) => {
+        return response.json();
+      });
   }
   getOffers() {
     return this._http(`offers`, RequestMethod.GET)
-    .then((response) => {
-      return response.json();
-    });
+      .then((response) => {
+        return response.json();
+      });
   }
   savePoint(model) {
     const url = `points/${model.id}`;
     return this._http(url, RequestMethod.PUT, model);
   }
-  deletePoint({id}) {
-    const url = `points/${id}`;
+  deletePoint(pointId) {
+    const url = `points/${pointId}`;
     return this._http(url, RequestMethod.DELETE);
   }
   _http(endpoint, method, model) {
@@ -57,12 +58,12 @@ class ApiProvider {
       options.body = JSON.stringify(model);
     }
     return fetch(`${this._baseUrl}/${endpoint}`, options)
-    .then((response) => {
-      if (response.ok) {
-        return Promise.resolve(response);
-      }
-      return Promise.reject(response);
-    });
+      .then((response) => {
+        if (response.ok) {
+          return Promise.resolve(response);
+        }
+        return Promise.reject(response);
+      });
   }
 
 }

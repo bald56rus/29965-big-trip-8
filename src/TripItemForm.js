@@ -21,41 +21,47 @@ class TripItemForm extends Component {
     this._apiProvider = _dependencies[`apiProvider`];
     this._destinations = _dependencies[`destinations`];
     this._offers = _dependencies[`offers`];
+    this._icons = _dependencies[`icons`];
+  }
+
+  _renderPictures(pictures) {
+    const container = new DocumentFragment();
+    pictures
+      .map((picture) => {
+        const markup = `<img src="${picture.src}" alt="${picture.description}" class="point__destination-image"></img>`;
+        const element = document.createElement(`template`);
+        element.innerHTML = markup;
+        return element.content;
+      })
+      .forEach((picture) => container.appendChild(picture));
+    return container;
   }
 
   _renderDestination(template, destination) {
     template.querySelector(`.point__destination-text`).textContent = destination.description;
-    const images = new DocumentFragment();
-    destination.pictures.forEach((picture) => {
-      const img = document.createElement(`img`);
-      img.src = picture.src;
-      img.alt = picture.description;
-      img.classList.add(`point__destination-image`);
-      images.appendChild(img);
-    });
-    const imagesContainer = template.querySelector(`.point__destination-images`);
-    imagesContainer.innerHTML = ``;
-    imagesContainer.appendChild(images);
+    const picturesContainer = template.querySelector(`.point__destination-images`);
+    picturesContainer.innerHTML = ``;
+    picturesContainer.appendChild(this._renderPictures(destination.pictures));
   }
 
-  _renderOffers(template, offers) {
-    const offersContainer = template.querySelector(`.point__offers-wrap`);
-    offersContainer.innerHTML = ``;
-    offers.map((offer) => {
-      const id = offer.title.split(` `).map((word) => word.toLowerCase()).join(`-`);
-      const markup =
-        `<input class="point__offers-input visually-hidden" type="checkbox" id="${id}" name="offer" value="${offer.title}" ${offer.accepted ? `checked` : ``}>
+  _renderOffer(model) {
+    const {title, price, accepted} = model;
+    const id = title.split(` `).map((word) => word.toLowerCase()).join(`-`);
+    const markup =
+      `<input class="point__offers-input visually-hidden" type="checkbox" id="${id}" name="offer" value="${title}" ${accepted ? `checked` : ``}>
         <label for="${id}" class="point__offers-label">
-          <span class="point__offer-service">${offer.title}</span> +&euro;
-          <span class="point__offer-price">${offer.price}</span>
+          <span class="point__offer-service">${title}</span> +&euro;
+          <span class="point__offer-price">${price}</span>
         </label>`;
-      const element = document.createElement(`template`);
-      element.innerHTML = markup;
-      return element.content;
-    })
-      .forEach((offer) => {
-        offersContainer.appendChild(offer);
-      });
+    const element = document.createElement(`template`);
+    element.innerHTML = markup;
+    return element.content;
+  }
+
+  _renderOffers(container, offers) {
+    offers
+      .map((offer) => this._renderOffer(offer))
+      .forEach((offer) => container.appendChild(offer));
   }
 
   get template() {
@@ -68,10 +74,13 @@ class TripItemForm extends Component {
     const favorite = template.querySelector(`.point__favorite-input`);
     favorite.value = this._model.is_favorite;
     favorite.checked = this._model.is_favorite;
-    template.querySelectorAll(`.travel-way__select-input`).forEach((input) => {
-      input.checked = this._model.type.toLowerCase() === input.value.toLowerCase();
-    });
-    this._renderOffers(template, this._model.offers);
+    template.querySelectorAll(`.travel-way__select-input`)
+      .forEach((input) => {
+        input.checked = this._model.type.toLowerCase() === input.value.toLowerCase();
+      });
+    this._offerContainer = template.querySelector(`.point__offers-wrap`);
+    this._icon = template.querySelector(`.travel-way__label`);
+    this._renderOffers(this._offerContainer, this._model.offers);
     this._renderDestination(template, this._model.destination);
     this._saveButton = template.querySelector(`.point__button--save`);
     this._deleteButton = template.querySelector(`button[type="reset"]`);
@@ -88,7 +97,7 @@ class TripItemForm extends Component {
       },
       'date-start': (value) => (model[`date_from`] = Date.parse(value)),
       'date-end': (value) => (model[`date_to`] = Date.parse(value)),
-      'price': (value) => (model.price = value),
+      'price': (value) => (model[`base_price`] = value),
       'favorite': () => (model[`is_favorite`] = true),
       'offer': (value) => {
         const offerElement = model.offers.find((offer) => offer.title === value);
@@ -145,13 +154,9 @@ class TripItemForm extends Component {
     if (typeof this._onDelete === `function`) {
       this._lock();
       this._deleteButton.textContent = `Deleting...`;
-      this._apiProvider.deletePoint(this._model).then((response) => {
-        if (response.ok) {
-          this._onDelete(this._element, this._model);
-        } else {
-          this._errorApiHandler();
-        }
-      }).catch(() => this._errorApiHandler());
+      this._apiProvider.deletePoint(this._model.id)
+        .then(() => this._onDelete(this._element, this._model))
+        .catch(() => this._errorApiHandler());
     }
   }
 
@@ -164,14 +169,19 @@ class TripItemForm extends Component {
   }
 
   _changeTravelWayHandler(evt) {
+    this._icon.textContent = this._icons[evt.target.value];
+    this._model.offers = [];
+    this._offerContainer.innerHTML = ``;
     const input = this._element.querySelector(`.travel-way__toggle`);
     input.checked = false;
-    this._model.offers = this._offers.find((offer) => offer.type === evt.target.value)
-      .offers
-      .map((offer) => {
+    const offersForType = this._offers.find((offer) => offer.type === evt.target.value);
+    if (offersForType) {
+      const offers = offersForType.offers.map((offer) => {
         return {title: offer.name, price: offer.price};
       });
-    this._renderOffers(this._element, this._model.offers);
+      this._model.offers = offers;
+      this._renderOffers(this._offerContainer, this._model.offers);
+    }
   }
 
   _escPressHandler(evt) {
