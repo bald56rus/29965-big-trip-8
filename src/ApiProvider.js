@@ -1,5 +1,6 @@
 import {cloneDeep} from 'lodash';
 import Dependencies from "./DependenciesContainer";
+import moment from 'moment';
 const RequestMethod = {
   GET: `GET`,
   POST: `POST`,
@@ -22,6 +23,17 @@ class ApiProvider {
       .catch(() => {
         const error = new Error(`Something went wrong while loading your route info. Check your connection or try again later`);
         return Promise.reject(error);
+      })
+      .then((points) => {
+        const grouped = points.reduce((accumulator, point) => {
+          const tripDay = moment(new Date(point[`date_from`])).format(`DD MMM`);
+          if (!accumulator[tripDay]) {
+            accumulator[tripDay] = [];
+          }
+          accumulator[tripDay].push(point);
+          return accumulator;
+        }, {});
+        return points;
       });
   }
   _fromServer(model) {

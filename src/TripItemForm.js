@@ -1,4 +1,6 @@
 import Component from "./Component";
+import TripOffer from "./TripOffer";
+import TripPicture from "./TripPicture";
 import {render} from "./Utils";
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
@@ -26,14 +28,7 @@ class TripItemForm extends Component {
 
   _renderPictures(pictures) {
     const container = new DocumentFragment();
-    pictures
-      .map((picture) => {
-        const markup = `<img src="${picture.src}" alt="${picture.description}" class="point__destination-image"></img>`;
-        const element = document.createElement(`template`);
-        element.innerHTML = markup;
-        return element.content;
-      })
-      .forEach((picture) => container.appendChild(picture));
+    pictures.forEach((picture) => container.appendChild(new TripPicture(picture).render()));
     return container;
   }
 
@@ -44,24 +39,8 @@ class TripItemForm extends Component {
     picturesContainer.appendChild(this._renderPictures(destination.pictures));
   }
 
-  _renderOffer(model) {
-    const {title, price, accepted} = model;
-    const id = title.split(` `).map((word) => word.toLowerCase()).join(`-`);
-    const markup =
-      `<input class="point__offers-input visually-hidden" type="checkbox" id="${id}" name="offer" value="${title}" ${accepted ? `checked` : ``}>
-        <label for="${id}" class="point__offers-label">
-          <span class="point__offer-service">${title}</span> +&euro;
-          <span class="point__offer-price">${price}</span>
-        </label>`;
-    const element = document.createElement(`template`);
-    element.innerHTML = markup;
-    return element.content;
-  }
-
   _renderOffers(container, offers) {
-    offers
-      .map((offer) => this._renderOffer(offer))
-      .forEach((offer) => container.appendChild(offer));
+    offers.forEach((offer) => container.appendChild(new TripOffer(offer).render()));
   }
 
   get template() {
@@ -114,7 +93,7 @@ class TripItemForm extends Component {
     this._deleteButton.disabled = true;
   }
 
-  _errorApiHandler() {
+  _apiErrorHandler() {
     this._element.style.border = `1px solid crimson`;
     this._saveButton.textContent = `Save`;
     this._saveButton.disabled = false;
@@ -142,7 +121,7 @@ class TripItemForm extends Component {
       });
       this._apiProvider.savePoint(model)
         .then(() => (this._onSave(this._element, model)))
-        .catch(() => this._errorApiHandler());
+        .catch(() => this._apiErrorHandler());
     }
   }
 
@@ -156,15 +135,24 @@ class TripItemForm extends Component {
       this._deleteButton.textContent = `Deleting...`;
       this._apiProvider.deletePoint(this._model.id)
         .then(() => this._onDelete(this._element, this._model))
-        .catch(() => this._errorApiHandler());
+        .catch(() => this._apiErrorHandler());
     }
   }
 
+  _fillDestinationsList() {
+    const container = this._element.querySelector(`#destination-select`);
+    this._destinations.forEach((destination) => {
+      const option = document.createElement(`option`);
+      option.value = destination.name;
+      container.appendChild(option);
+    });
+  }
+
   _changeDestinationHandler(evt) {
-    const selected = evt.target.value;
-    if (selected !== ``) {
-      const destinationElement = this._destinations.find((destination) => destination.name === selected);
-      this._renderDestination(this._element, destinationElement);
+    const destinationName = evt.target.value;
+    if (destinationName !== ``) {
+      const newDestination = this._destinations.find((destination) => destination.name === destinationName);
+      this._renderDestination(this._element, newDestination);
     }
   }
 
@@ -176,10 +164,7 @@ class TripItemForm extends Component {
     input.checked = false;
     const offersForType = this._offers.find((offer) => offer.type === evt.target.value);
     if (offersForType) {
-      const offers = offersForType.offers.map((offer) => {
-        return {title: offer.name, price: offer.price};
-      });
-      this._model.offers = offers;
+      this._model.offers = offersForType.offers.map((offer) => ({title: offer.name, price: offer.price}));
       this._renderOffers(this._offerContainer, this._model.offers);
     }
   }
@@ -211,18 +196,10 @@ class TripItemForm extends Component {
     stopPickerOptions.defaultDate = this._model.date_to;
     flatpickr(startPicker, startPickerOptions);
     flatpickr(stopPicker, stopPickerOptions);
-    const destinationInput = this._element.querySelector(`#destination`);
-    destinationInput.addEventListener(`change`, this._changeDestinationHandler);
-    const destinationList = this._element.querySelector(`#destination-select`);
-    this._destinations.forEach((destination) => {
-      const option = document.createElement(`option`);
-      option.value = destination.name;
-      destinationList.appendChild(option);
-    });
+    this._fillDestinationsList();
+    this._element.querySelector(`#destination`).addEventListener(`change`, this._changeDestinationHandler);
     this._element.querySelectorAll(`.travel-way__select-input`)
-      .forEach((input) => {
-        input.addEventListener(`change`, this._changeTravelWayHandler);
-      });
+      .forEach((input) => (input.addEventListener(`change`, this._changeTravelWayHandler)));
   }
 }
 

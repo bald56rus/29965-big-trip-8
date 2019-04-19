@@ -39,6 +39,7 @@ const container = {
   '#table': document.getElementById(`table`),
   '#stats': document.getElementById(`stats`)
 };
+const totalPrice = document.querySelector(`.trip__total-cost`);
 let activeContainer = container[`#table`];
 const filterContainer = document.querySelector(`.trip-filter`);
 const contentSwitches = document.querySelectorAll(`.view-switch__item`);
@@ -247,6 +248,16 @@ const init = () => {
     .catch((error) => (activeContainer.innerHTML = error.message));
   contentSwitches.forEach((element) => element.addEventListener(`click`, toggleVisibleContent));
   renderFilters();
+  document.addEventListener(`offer-accepted`, (evt) => {
+    const currency = totalPrice.textContent.substring(0, 1);
+    const newTotal = parseFloat(totalPrice.textContent.substring(1)) + evt.detail.price;
+    totalPrice.textContent = `${currency} ${newTotal}`;
+  });
+  document.addEventListener(`offer-rejected`, (evt) => {
+    const currency = totalPrice.textContent.substring(0, 1);
+    const newTotal = parseFloat(totalPrice.textContent.substring(1)) - evt.detail.price;
+    totalPrice.textContent = `${currency} ${newTotal}`;
+  });
 };
 
 init();
