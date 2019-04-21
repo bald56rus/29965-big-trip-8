@@ -1,6 +1,5 @@
 import {cloneDeep} from 'lodash';
 import Dependencies from "./DependenciesContainer";
-import moment from 'moment';
 const RequestMethod = {
   GET: `GET`,
   POST: `POST`,
@@ -19,26 +18,27 @@ class ApiProvider {
   getPoints() {
     return this._http(`points`, RequestMethod.GET)
       .then((response) => (response.json()))
-      .then((points) => (points.map((point) => this._fromServer(point))))
+      .then((points) => (points.map((point) => this.mapToDTO(point))))
       .catch(() => {
         const error = new Error(`Something went wrong while loading your route info. Check your connection or try again later`);
         return Promise.reject(error);
-      })
-      .then((points) => {
-        const grouped = points.reduce((accumulator, point) => {
-          const tripDay = moment(new Date(point[`date_from`])).format(`DD MMM`);
-          if (!accumulator[tripDay]) {
-            accumulator[tripDay] = [];
-          }
-          accumulator[tripDay].push(point);
-          return accumulator;
-        }, {});
-        return points;
       });
   }
-  _fromServer(model) {
+  mapToDTO(model) {
     const mappedModel = cloneDeep(model);
+    const {date_from: dateFrom, date_to: dateTo, base_price: price} = mappedModel;
+    mappedModel.dateFrom = new Date(dateFrom);
+    mappedModel.dateTo = new Date(dateTo);
+    mappedModel.price = price;
     mappedModel.icon = this._icons[mappedModel.type];
+    return mappedModel;
+  }
+  mapToDAO(model) {
+    const mappedModel = cloneDeep(model);
+    const {dateFrom, dateTo, price} = mappedModel;
+    mappedModel[`date_from`] = dateFrom.getTime();
+    mappedModel[`date_to`] = dateTo.getTime();
+    mappedModel[`base_price`] = price;
     return mappedModel;
   }
   getDestinations() {
@@ -53,9 +53,13 @@ class ApiProvider {
         return response.json();
       });
   }
+  createPoint(model) {
+    const url = `points`;
+    return this._http(url, RequestMethod.POST, this.mapToDAO(model));
+  }
   savePoint(model) {
     const url = `points/${model.id}`;
-    return this._http(url, RequestMethod.PUT, model);
+    return this._http(url, RequestMethod.PUT, this.mapToDAO(model));
   }
   deletePoint(pointId) {
     const url = `points/${pointId}`;

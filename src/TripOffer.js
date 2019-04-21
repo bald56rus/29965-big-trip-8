@@ -18,17 +18,6 @@ class TripOffer extends Component {
     element.innerHTML = markup;
     return element.content;
   }
-
-  bind() {
-    this._element.querySelector(`input`).addEventListener(`change`, (evt) => {
-      this._model.accepted = evt.target.checked;
-      const event = `offer-${evt.target.checked ? `accepted` : `rejected`}`;
-      document.dispatchEvent(new CustomEvent(event, {
-        bubbles: true,
-        detail: this._model
-      }));
-    });
-  }
 }
 
 export default TripOffer;

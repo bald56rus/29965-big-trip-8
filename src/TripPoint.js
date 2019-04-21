@@ -3,7 +3,7 @@ import {cloneDeep} from 'lodash';
 import moment from 'moment';
 import {render} from './Utils';
 
-class TripItem extends Component {
+class TripPoint extends Component {
   constructor(model) {
     super(model);
     this._clickHandler = this._clickHandler.bind(this);
@@ -11,18 +11,10 @@ class TripItem extends Component {
 
   _defineServiceFields(model) {
     const mappedModel = cloneDeep(model);
-    const {date_from: dateFrom, date_to: dateTo} = mappedModel;
+    const {dateFrom, dateTo} = mappedModel;
+    mappedModel.formattedStart = moment(dateFrom).format(`HH:mm`);
+    mappedModel.formattedStop = moment(dateTo).format(`HH:mm`);
     Object.defineProperties(mappedModel, {
-      'formattedStart': {
-        get() {
-          return moment(dateFrom).format(`HH:mm`);
-        }
-      },
-      'formattedStop': {
-        get() {
-          return moment(dateTo).format(`HH:mm`);
-        }
-      },
       'duration': {
         get() {
           let result = ``;
@@ -48,13 +40,10 @@ class TripItem extends Component {
       .cloneNode(true);
     template.innerHTML = render(template.innerHTML, this._defineServiceFields(this._model));
     const offerContainer = template.querySelector(`.trip-point__offers`);
-    this._model.offers.map((offer) => {
-      const markup =
-        `<li>
-          <button class="trip-point__offer">{{title}} +&euro;&nbsp;{{price}}</button>
-        </li>`;
+    this._model.offers.slice(0, 2).map((offer) => {
+      const {title, price} = offer;
       const element = document.createElement(`template`);
-      element.innerHTML = render(markup, offer);
+      element.innerHTML = `<li><button class="trip-point__offer">${title} +&euro;&nbsp;${price}</button></li>`;
       return element.content;
     }).forEach((offer) => offerContainer.appendChild(offer));
     return template;
@@ -75,4 +64,4 @@ class TripItem extends Component {
   }
 }
 
-export default TripItem;
+export default TripPoint;

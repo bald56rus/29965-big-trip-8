@@ -1,10 +1,11 @@
 import Filter from './Filter';
-import TripItem from './TripItem';
-import TripItemForm from './TripItemForm';
+import TripPoint from './TripPoint';
+import EditTripPoint from './EditTripPoint';
 import Stats from './Stats';
 import ApiProvider from './ApiProvider';
 import DependenciesContainer from './DependenciesContainer';
 import moment from 'moment';
+import TripDay from './TripDay';
 
 const PointFilter = {
   'everything': () => true,
@@ -64,7 +65,7 @@ depenendencies.register(`icons`, Icons);
 let points = [];
 const apiProvider = new ApiProvider({
   baseUrl: `https://es8-demo-srv.appspot.com/big-trip`,
-  headers: {'Authorization': `Basic eo0w590ik29889b`}
+  headers: {'Authorization': `Basic eo0w590ik29889g`}
 });
 depenendencies.register(`apiProvider`, apiProvider);
 
@@ -92,20 +93,37 @@ const removePoint = (savedPoints, pointId) => {
 const addPointHandler = () => {
   const point = {
     type: ``,
+    dateFrom: new Date(),
+    dateTo: new Date(),
     offers: [],
     destination: {
       pictures: []
     }
   };
-  pointsContainer.insertBefore(new TripItemForm(point).render(), pointsContainer.firstChild);
+  const newPoint = new EditTripPoint(point);
+  newPoint.onSave = createPointHandler;
+  newPoint.onCancel = cancelCreateHandler;
+  newPoint.onDelete = cancelCreateHandler;
+  pointsContainer.insertBefore(newPoint.render(), pointsContainer.firstChild);
 };
 
 document.querySelector(`.new-event`).addEventListener(`click`, addPointHandler);
 
 const clickPointHandler = (original, model) => {
-  const replacement = new TripItemForm(model);
+  const replacement = new EditTripPoint(model);
+  replacement.onCancel = cancelEditHandler;
   replacement.onSave = savePointHandler;
   replacement.onDelete = deletePointHandler;
+  replaceElements(original, replacement.render());
+};
+
+const cancelCreateHandler = (original) => {
+  original.parentNode.removeChild(original);
+};
+
+const cancelEditHandler = (original, model) => {
+  const replacement = new TripPoint(model);
+  replacement.onClick = clickPointHandler;
   replaceElements(original, replacement.render());
 };
 
@@ -114,8 +132,7 @@ const deletePointHandler = (element, model) => {
   element.parentNode.removeChild(element);
 };
 
-const savePointHandler = (original, model) => {
-  points = removePoint(points, model.id);
+const createPointHandler = (original, model) => {
   points.push(model);
   clearContainer(pointsContainer);
   let filtered = filterPoints(points, activeFilter);
@@ -123,17 +140,47 @@ const savePointHandler = (original, model) => {
   renderPoints(pointsContainer, sorted);
 };
 
+const savePointHandler = (original, model) => {
+  points = removePoint(points, model.id);
+  points.push(model);
+  clearContainer(pointsContainer);
+  let filtered = filterPoints(points, activeFilter);
+  let sorted = sortPoints(filtered, activeSort);
+  renderTotalPrice(calculateTotalPrice(points));
+  renderPoints(pointsContainer, sorted);
+};
+
 const clearContainer = (targetContainer) => {
   targetContainer.innerHTML = ``;
 };
 
+const renderTotalPrice = (price) => {
+  const currency = totalPrice.textContent.substring(0, 1);
+  totalPrice.innerHTML = `${currency}&nbsp;${price}`;
+};
+
 const renderPoints = (targetContainer, pointList) => {
-  pointList
-    .forEach((point) => {
-      const element = new TripItem(point);
-      element.onClick = clickPointHandler;
-      targetContainer.appendChild(element.render());
+  const days = pointList
+  .reduce((accumulator, point) => {
+    const tripDay = moment(point.dateFrom).format(`MMM DD`);
+    if (!accumulator[tripDay]) {
+      accumulator[tripDay] = [];
+    }
+    accumulator[tripDay].push(point);
+    return accumulator;
+  }, {});
+  let tripDays = new DocumentFragment();
+  Object.keys(days).forEach((day, index) => {
+    const tripDay = new TripDay({day, index: index + 1}).render();
+    const tripPoints = tripDay.querySelector(`.trip-day__items`);
+    days[day].forEach((point) => {
+      const tripPoint = new TripPoint(point);
+      tripPoint.onClick = clickPointHandler;
+      tripPoints.appendChild(tripPoint.render());
     });
+    tripDays.appendChild(tripDay);
+  });
+  targetContainer.appendChild(tripDays);
 };
 
 const filterPoints = (pointList, fn) => {
@@ -168,6 +215,17 @@ const calculateStats = (pointList) => {
     return accumulator;
   }, stats);
   return stats;
+};
+
+const calculateTotalPrice = (pointList) => {
+  return pointList.reduce((basePrice, point) => {
+    basePrice += point.price;
+    let acceptedOffers = point.offers.filter((offer) => offer.accepted === true);
+    if (acceptedOffers.length > 0) {
+      basePrice += acceptedOffers.reduce((offerPrice, offer) => (offerPrice += offer.price), 0);
+    }
+    return basePrice;
+  }, 0);
 };
 
 const renderStats = (pointList) => {
@@ -243,7 +301,10 @@ const init = () => {
       clearContainer(pointsContainer);
       let filtered = filterPoints(points, activeFilter);
       let sorted = sortPoints(filtered, activeSort);
+      pointsContainer = document.querySelector(`.trip-points`);
+      pointsContainer.innerHTML = ``;
       renderPoints(pointsContainer, sorted);
+      renderTotalPrice(calculateTotalPrice(points));
     })
     .catch((error) => (activeContainer.innerHTML = error.message));
   contentSwitches.forEach((element) => element.addEventListener(`click`, toggleVisibleContent));

@@ -7,10 +7,36 @@ import 'flatpickr/dist/flatpickr.min.css';
 import {cloneDeep} from 'lodash';
 import DependenciesContainer from './DependenciesContainer';
 
+
+const KeyCode = {
+  ESC: 27
+};
+
+const dayPickerOptions = {
+  altInput: true,
+  altFormat: `M d`,
+  dateFormat: `Z`,
+};
+const rangePickerOptions = {
+  'enableTime': true,
+  'time_24hr': true,
+  'altInput': true,
+  'altFormat': `H:i`,
+  'dateFormat': `Z`
+};
+
+let form = null;
+let dayPicker = null;
+let dateFromPicker = null;
+let dateToPicker = null;
+let saveButton = null;
+let deleteButton = null;
+let offersContainer = null;
+
 class TripItemForm extends Component {
   constructor(model) {
     super(model);
-    this._escPressHandler = this._escPressHandler.bind(this);
+    this._cancelHandler = this._cancelHandler.bind(this);
     this._saveHandler = this._saveHandler.bind(this);
     this._deleteHandler = this._deleteHandler.bind(this);
     this._changeDestinationHandler = this._changeDestinationHandler.bind(this);
@@ -50,6 +76,13 @@ class TripItemForm extends Component {
       .querySelector(`.point`)
       .cloneNode(true);
     template.innerHTML = render(template.innerHTML, this._model);
+    form = template.querySelector(`form`);
+    dayPicker = template.querySelector(`.point__date .point__input`);
+    dayPicker.value = this._model.dateFrom;
+    dateFromPicker = template.querySelector(`input[name="date-start"]`);
+    dateFromPicker.value = this._model.dateFrom;
+    dateToPicker = template.querySelector(`input[name="date-end"]`);
+    dateToPicker.value = this._model.dateTo;
     const favorite = template.querySelector(`.point__favorite-input`);
     favorite.value = this._model.is_favorite;
     favorite.checked = this._model.is_favorite;
@@ -57,12 +90,12 @@ class TripItemForm extends Component {
       .forEach((input) => {
         input.checked = this._model.type.toLowerCase() === input.value.toLowerCase();
       });
-    this._offerContainer = template.querySelector(`.point__offers-wrap`);
+    offersContainer = template.querySelector(`.point__offers-wrap`);
     this._icon = template.querySelector(`.travel-way__label`);
-    this._renderOffers(this._offerContainer, this._model.offers);
+    this._renderOffers(offersContainer, this._model.offers);
     this._renderDestination(template, this._model.destination);
-    this._saveButton = template.querySelector(`.point__button--save`);
-    this._deleteButton = template.querySelector(`button[type="reset"]`);
+    saveButton = template.querySelector(`.point__button--save`);
+    deleteButton = template.querySelector(`button[type="reset"]`);
     return template;
   }
 
@@ -74,9 +107,9 @@ class TripItemForm extends Component {
       'destination': (value) => {
         model.destination = this._destinations.find((destination) => destination.name === value);
       },
-      'date-start': (value) => (model[`date_from`] = Date.parse(value)),
-      'date-end': (value) => (model[`date_to`] = Date.parse(value)),
-      'price': (value) => (model[`base_price`] = value),
+      'date-start': (value) => (model.dateFrom = new Date(Date.parse(value))),
+      'date-end': (value) => (model.dateTo = new Date(Date.parse(value))),
+      'price': (value) => (model.price = parseInt(value, 10)),
       'favorite': () => (model[`is_favorite`] = true),
       'offer': (value) => {
         const offerElement = model.offers.find((offer) => offer.title === value);
@@ -88,18 +121,22 @@ class TripItemForm extends Component {
   _lock() {
     this._element.style.border = `none`;
     this._element.classList.remove(`shake`);
-    this._form.disabled = true;
-    this._saveButton.disabled = true;
-    this._deleteButton.disabled = true;
+    form.disabled = true;
+    saveButton.disabled = true;
+    deleteButton.disabled = true;
   }
 
   _apiErrorHandler() {
     this._element.style.border = `1px solid crimson`;
-    this._saveButton.textContent = `Save`;
-    this._saveButton.disabled = false;
-    this._deleteButton.textContent = `Delete`;
-    this._deleteButton.disabled = false;
+    saveButton.textContent = `Save`;
+    saveButton.disabled = false;
+    deleteButton.textContent = `Delete`;
+    deleteButton.disabled = false;
     this._element.classList.add(`shake`);
+  }
+
+  set onCancel(handler) {
+    this._onCancel = handler;
   }
 
   set onSave(handler) {
@@ -109,9 +146,9 @@ class TripItemForm extends Component {
   _saveHandler(evt) {
     if (typeof this._onSave === `function`) {
       this._lock();
-      this._saveButton.textContent = `Saving...`;
+      saveButton.textContent = `Saving...`;
       evt.preventDefault();
-      const formData = new FormData(this._form);
+      const formData = new FormData(form);
       const model = cloneDeep(this._model);
       const mapper = this._createMapper(model);
       formData.forEach((value, property) => {
@@ -119,9 +156,9 @@ class TripItemForm extends Component {
           mapper[property](value);
         }
       });
-      this._apiProvider.savePoint(model)
-        .then(() => (this._onSave(this._element, model)))
-        .catch(() => this._apiErrorHandler());
+      (model.id ? this._apiProvider.savePoint(model) : this._apiProvider.createPoint(model))
+      .then(() => (this._onSave(this._element, model)))
+      .catch(() => this._apiErrorHandler());
     }
   }
 
@@ -132,14 +169,14 @@ class TripItemForm extends Component {
   _deleteHandler() {
     if (typeof this._onDelete === `function`) {
       this._lock();
-      this._deleteButton.textContent = `Deleting...`;
+      deleteButton.textContent = `Deleting...`;
       this._apiProvider.deletePoint(this._model.id)
         .then(() => this._onDelete(this._element, this._model))
         .catch(() => this._apiErrorHandler());
     }
   }
 
-  _fillDestinationsList() {
+  _renderDestinations() {
     const container = this._element.querySelector(`#destination-select`);
     this._destinations.forEach((destination) => {
       const option = document.createElement(`option`);
@@ -159,44 +196,33 @@ class TripItemForm extends Component {
   _changeTravelWayHandler(evt) {
     this._icon.textContent = this._icons[evt.target.value];
     this._model.offers = [];
-    this._offerContainer.innerHTML = ``;
+    offersContainer.innerHTML = ``;
     const input = this._element.querySelector(`.travel-way__toggle`);
     input.checked = false;
     const offersForType = this._offers.find((offer) => offer.type === evt.target.value);
     if (offersForType) {
       this._model.offers = offersForType.offers.map((offer) => ({title: offer.name, price: offer.price}));
-      this._renderOffers(this._offerContainer, this._model.offers);
+      this._renderOffers(offersContainer, this._model.offers);
     }
   }
 
-  _escPressHandler(evt) {
-    if (evt.keyCode === 27) {
-      document.removeEventListener(`keydown`, this._escPressHandler);
-      this._onSave(this._element, this._model);
+  _cancelHandler(evt) {
+    if (typeof this._onCancel === `function`) {
+      if (evt.keyCode === KeyCode.ESC) {
+        document.removeEventListener(`keydown`, this._cancelHandler);
+        this._onCancel(this._element, this._model);
+      }
     }
   }
 
   bind() {
-    document.addEventListener(`keydown`, this._escPressHandler);
-    this._form = this._element.querySelector(`form`);
-    this._form.addEventListener(`submit`, this._saveHandler);
-    this._form.addEventListener(`reset`, this._deleteHandler);
-    const startPicker = this._element.querySelector(`input[name="date-start"]`);
-    const stopPicker = this._element.querySelector(`input[name="date-end"]`);
-    const pickerOptions = {
-      'enableTime': true,
-      'time_24hr': true,
-      'altInput': true,
-      'altFormat': `H:i`,
-      'dateFormat': `Z`
-    };
-    const startPickerOptions = cloneDeep(pickerOptions);
-    const stopPickerOptions = cloneDeep(pickerOptions);
-    startPickerOptions.defaultDate = this._model.date_from;
-    stopPickerOptions.defaultDate = this._model.date_to;
-    flatpickr(startPicker, startPickerOptions);
-    flatpickr(stopPicker, stopPickerOptions);
-    this._fillDestinationsList();
+    document.addEventListener(`keydown`, this._cancelHandler);
+    form.addEventListener(`submit`, this._saveHandler);
+    form.addEventListener(`reset`, this._deleteHandler);
+    flatpickr(dayPicker, dayPickerOptions);
+    flatpickr(dateFromPicker, rangePickerOptions);
+    flatpickr(dateToPicker, rangePickerOptions);
+    this._renderDestinations();
     this._element.querySelector(`#destination`).addEventListener(`change`, this._changeDestinationHandler);
     this._element.querySelectorAll(`.travel-way__select-input`)
       .forEach((input) => (input.addEventListener(`change`, this._changeTravelWayHandler)));
