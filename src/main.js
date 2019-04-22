@@ -65,7 +65,11 @@ depenendencies.register(`icons`, Icons);
 let points = [];
 const apiProvider = new ApiProvider({
   baseUrl: `https://es8-demo-srv.appspot.com/big-trip`,
-  headers: {'Authorization': `Basic eo0w590ik29889g`}
+  headers: {
+    'Accept': `application/json`,
+    'Content-Type': `application/json`,
+    'Authorization': `Basic eo0w590ik29889j`
+  }
 });
 depenendencies.register(`apiProvider`, apiProvider);
 

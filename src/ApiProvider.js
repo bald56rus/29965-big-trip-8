@@ -70,7 +70,7 @@ class ApiProvider {
       method,
       headers: this._headers
     };
-    if (!model) {
+    if (model) {
       options.body = JSON.stringify(model);
     }
     return fetch(`${this._baseUrl}/${endpoint}`, options)
