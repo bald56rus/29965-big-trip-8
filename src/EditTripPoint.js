@@ -157,8 +157,10 @@ class TripItemForm extends Component {
         }
       });
       (model.id ? this._apiProvider.savePoint(model) : this._apiProvider.createPoint(model))
-      .then(() => (this._onSave(this._element, model)))
-      .catch(() => this._apiErrorHandler());
+        .then((point) => {
+          this._onSave(this._element, point);
+        })
+        .catch(() => this._apiErrorHandler());
     }
   }
 

@@ -39,6 +39,9 @@ class ApiProvider {
     mappedModel[`date_from`] = dateFrom.getTime();
     mappedModel[`date_to`] = dateTo.getTime();
     mappedModel[`base_price`] = price;
+    delete mappedModel.dateFrom;
+    delete mappedModel.dateTo;
+    delete mappedModel.price;
     return mappedModel;
   }
   getDestinations() {
@@ -55,11 +58,15 @@ class ApiProvider {
   }
   createPoint(model) {
     const url = `points`;
-    return this._http(url, RequestMethod.POST, this.mapToDAO(model));
+    return this._http(url, RequestMethod.POST, this.mapToDAO(model))
+      .then((response) => (response.json()))
+      .then((point) => (this.mapToDTO(point)));
   }
   savePoint(model) {
     const url = `points/${model.id}`;
-    return this._http(url, RequestMethod.PUT, this.mapToDAO(model));
+    return this._http(url, RequestMethod.PUT, this.mapToDAO(model))
+      .then((response) => (response.json()))
+      .then((point) => (this.mapToDTO(point)));
   }
   deletePoint(pointId) {
     const url = `points/${pointId}`;

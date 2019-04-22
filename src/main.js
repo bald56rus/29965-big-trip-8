@@ -165,14 +165,14 @@ const renderTotalPrice = (price) => {
 
 const renderPoints = (targetContainer, pointList) => {
   const days = pointList
-  .reduce((accumulator, point) => {
-    const tripDay = moment(point.dateFrom).format(`MMM DD`);
-    if (!accumulator[tripDay]) {
-      accumulator[tripDay] = [];
-    }
-    accumulator[tripDay].push(point);
-    return accumulator;
-  }, {});
+    .reduce((accumulator, point) => {
+      const tripDay = moment(point.dateFrom).format(`MMM DD`);
+      if (!accumulator[tripDay]) {
+        accumulator[tripDay] = [];
+      }
+      accumulator[tripDay].push(point);
+      return accumulator;
+    }, {});
   let tripDays = new DocumentFragment();
   Object.keys(days).forEach((day, index) => {
     const tripDay = new TripDay({day, index: index + 1}).render();
