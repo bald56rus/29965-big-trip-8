@@ -68,7 +68,7 @@ const apiProvider = new ApiProvider({
   headers: {
     'Accept': `application/json`,
     'Content-Type': `application/json`,
-    'Authorization': `Basic eo0w590ik29889j`
+    'Authorization': `Basic eo0w590ik29889i`
   }
 });
 depenendencies.register(`apiProvider`, apiProvider);
@@ -266,12 +266,12 @@ const renderFilters = () => {
   filterContainer.innerHTML = ``;
   Object.keys(PointFilter).forEach((key) => {
     const filter = new Filter({title: key});
-    filter.onClick = () => toggelFilterHandler(PointFilter[key]);
+    filter.onClick = () => toggleFilterHandler(PointFilter[key]);
     filterContainer.appendChild(filter.render());
   });
 };
 
-const toggelFilterHandler = (filter) => {
+const toggleFilterHandler = (filter) => {
   activeFilter = filter;
   clearContainer(pointsContainer);
   let filtered = filterPoints(points, activeFilter);
@@ -313,16 +313,6 @@ const init = () => {
     .catch((error) => (activeContainer.innerHTML = error.message));
   contentSwitches.forEach((element) => element.addEventListener(`click`, toggleVisibleContent));
   renderFilters();
-  document.addEventListener(`offer-accepted`, (evt) => {
-    const currency = totalPrice.textContent.substring(0, 1);
-    const newTotal = parseFloat(totalPrice.textContent.substring(1)) + evt.detail.price;
-    totalPrice.textContent = `${currency} ${newTotal}`;
-  });
-  document.addEventListener(`offer-rejected`, (evt) => {
-    const currency = totalPrice.textContent.substring(0, 1);
-    const newTotal = parseFloat(totalPrice.textContent.substring(1)) - evt.detail.price;
-    totalPrice.textContent = `${currency} ${newTotal}`;
-  });
 };
 
 init();

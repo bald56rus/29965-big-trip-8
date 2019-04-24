@@ -22,7 +22,7 @@ class TripPoint extends Component {
           const days = duration.get(`days`);
           result += days > 0 ? days.toString().padStart(2, `0`).concat(`D `) : ``;
           const hours = duration.get(`hours`);
-          result += hours > 0 ? hours.toString().padStart(2, `0`).concat(`H `) : ``;
+          result += days > 0 || hours > 0 ? hours.toString().padStart(2, `0`).concat(`H `) : ``;
           const minutes = duration.get(`minutes`);
           result += minutes.toString().padStart(2, `0`).concat(`M`);
           return result;

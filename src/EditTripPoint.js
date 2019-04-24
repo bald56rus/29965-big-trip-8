@@ -11,7 +11,6 @@ import DependenciesContainer from './DependenciesContainer';
 const KeyCode = {
   ESC: 27
 };
-
 const dayPickerOptions = {
   altInput: true,
   altFormat: `M d`,
@@ -33,7 +32,7 @@ let saveButton = null;
 let deleteButton = null;
 let offersContainer = null;
 
-class TripItemForm extends Component {
+class EditTripPoint extends Component {
   constructor(model) {
     super(model);
     this._cancelHandler = this._cancelHandler.bind(this);
@@ -231,4 +230,4 @@ class TripItemForm extends Component {
   }
 }
 
-export default TripItemForm;
+export default EditTripPoint;
