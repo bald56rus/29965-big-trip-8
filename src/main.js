@@ -7,10 +7,12 @@ import DependenciesContainer from './DependenciesContainer';
 import moment from 'moment';
 import TripDay from './TripDay';
 
+const BarHeight = 55;
+
 const PointFilter = {
   'everything': () => true,
-  'future': (point) => point.date_from > new Date(),
-  'past': (point) => point.date_to <= new Date()
+  'future': (point) => point.dateFrom > new Date(),
+  'past': (point) => point.dateTo <= new Date()
 };
 
 const sortBy = (key) => {
@@ -29,12 +31,13 @@ const sortBy = (key) => {
 
 const PointSort = {
   event: sortBy(`type`),
-  time: sortBy(`date_from`),
-  price: sortBy(`base_price`)
+  time: sortBy(`dateFrom`),
+  price: sortBy(`price`)
 };
 
 let activeFilter = PointFilter[document.querySelector(`[name="filter"]:checked`).value];
 let activeSort = PointSort[document.querySelector(`[name="trip-sorting"]:checked`).value];
+let activePoint = null;
 
 const container = {
   '#table': document.getElementById(`table`),
@@ -60,18 +63,18 @@ const Icons = {
   "sightseeing": `🏛️`,
   "restaurant": `🍴`,
 };
-const depenendencies = new DependenciesContainer();
-depenendencies.register(`icons`, Icons);
+const dependenciesContainer = new DependenciesContainer();
+dependenciesContainer.register(`icons`, Icons);
 let points = [];
 const apiProvider = new ApiProvider({
   baseUrl: `https://es8-demo-srv.appspot.com/big-trip`,
   headers: {
     'Accept': `application/json`,
     'Content-Type': `application/json`,
-    'Authorization': `Basic eo0w590ik29889j`
+    'Authorization': `Basic eo0w590ik29889i`
   }
 });
-depenendencies.register(`apiProvider`, apiProvider);
+dependenciesContainer.register(`apiProvider`, apiProvider);
 
 const toggleVisibleContent = (evt) => {
   evt.preventDefault();
@@ -88,6 +91,7 @@ const toggleVisibleContent = (evt) => {
 const replaceElements = (original, replacement) => {
   original.parentNode.insertBefore(replacement, original.nextSibling);
   original.parentNode.removeChild(original);
+  original = null;
 };
 
 const removePoint = (savedPoints, pointId) => {
@@ -95,10 +99,12 @@ const removePoint = (savedPoints, pointId) => {
 };
 
 const addPointHandler = () => {
+  closeOpenedPoint();
+  const now = new Date();
   const point = {
     type: ``,
-    dateFrom: new Date(),
-    dateTo: new Date(),
+    dateFrom: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    dateTo: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
     offers: [],
     destination: {
       pictures: []
@@ -113,38 +119,49 @@ const addPointHandler = () => {
 
 document.querySelector(`.new-event`).addEventListener(`click`, addPointHandler);
 
+const closeOpenedPoint = () => {
+  if (activePoint !== null) {
+    const tripPoint = new TripPoint(activePoint.model);
+    tripPoint.onClick = clickPointHandler;
+    replaceElements(activePoint.element, tripPoint.render());
+    activePoint = null;
+  }
+};
+
 const clickPointHandler = (original, model) => {
-  const replacement = new EditTripPoint(model);
-  replacement.onCancel = cancelEditHandler;
-  replacement.onSave = savePointHandler;
-  replacement.onDelete = deletePointHandler;
-  replaceElements(original, replacement.render());
+  closeOpenedPoint();
+  const tripPoint = new EditTripPoint(model);
+  tripPoint.onCancel = closeOpenedPoint;
+  tripPoint.onSave = savePointHandler;
+  tripPoint.onDelete = deletePointHandler;
+  const replacement = tripPoint.render();
+  replaceElements(original, replacement);
+  activePoint = {element: replacement, model};
 };
 
 const cancelCreateHandler = (original) => {
   original.parentNode.removeChild(original);
 };
 
-const cancelEditHandler = (original, model) => {
-  const replacement = new TripPoint(model);
-  replacement.onClick = clickPointHandler;
-  replaceElements(original, replacement.render());
+const deletePointHandler = (pointId) => {
+  points = removePoint(points, pointId);
+  clearContainer(pointsContainer);
+  let filtered = filterPoints(points, activeFilter);
+  let sorted = sortPoints(filtered, activeSort);
+  renderTotalPrice(calculateTotalPrice(sorted));
+  renderPoints(pointsContainer, sorted);
 };
 
-const deletePointHandler = (element, model) => {
-  points = removePoint(points, model);
-  element.parentNode.removeChild(element);
-};
-
-const createPointHandler = (original, model) => {
+const createPointHandler = (model) => {
   points.push(model);
   clearContainer(pointsContainer);
   let filtered = filterPoints(points, activeFilter);
   let sorted = sortPoints(filtered, activeSort);
+  renderTotalPrice(calculateTotalPrice(sorted));
   renderPoints(pointsContainer, sorted);
 };
 
-const savePointHandler = (original, model) => {
+const savePointHandler = (model) => {
   points = removePoint(points, model.id);
   points.push(model);
   clearContainer(pointsContainer);
@@ -177,7 +194,7 @@ const renderPoints = (targetContainer, pointList) => {
   Object.keys(days).forEach((day, index) => {
     const tripDay = new TripDay({day, index: index + 1}).render();
     const tripPoints = tripDay.querySelector(`.trip-day__items`);
-    days[day].forEach((point) => {
+    days[day].sort(activeSort).forEach((point) => {
       const tripPoint = new TripPoint(point);
       tripPoint.onClick = clickPointHandler;
       tripPoints.appendChild(tripPoint.render());
@@ -203,11 +220,11 @@ const calculateStats = (pointList) => {
     time: {}
   };
   pointList.reduce((accumulator, current) => {
-    accumulator.price += current[`base_price`];
+    accumulator.price += current.price;
     if (!accumulator.money[current.type]) {
       accumulator.money[current.type] = 0;
     }
-    accumulator.money[current.type] += current.base_price;
+    accumulator.money[current.type] += current.price;
     if (!accumulator.transport[current.type]) {
       accumulator.transport[current.type] = 0;
     }
@@ -215,30 +232,29 @@ const calculateStats = (pointList) => {
     if (!accumulator.time[current.type]) {
       accumulator.time[current.type] = 0;
     }
-    accumulator.time[current.type] += moment(current.date_to).diff(current.date_from);
+    accumulator.time[current.type] += moment(current.dateTo).diff(current.dateFrom);
     return accumulator;
   }, stats);
   return stats;
 };
 
 const calculateTotalPrice = (pointList) => {
-  return pointList.reduce((basePrice, point) => {
-    basePrice += point.price;
+  return pointList.reduce((total, point) => {
+    total += point.price;
     let acceptedOffers = point.offers.filter((offer) => offer.accepted === true);
     if (acceptedOffers.length > 0) {
-      basePrice += acceptedOffers.reduce((offerPrice, offer) => (offerPrice += offer.price), 0);
+      total += acceptedOffers.reduce((offerPrice, offer) => (offerPrice += offer.price), 0);
     }
-    return basePrice;
+    return total;
   }, 0);
 };
 
 const renderStats = (pointList) => {
-  const BAR_HEIGHT = 55;
   const stats = calculateStats(pointList);
   const {money: moneyStats, transport: transportStats, time: timeStats} = stats;
-  moneyCtx.height = BAR_HEIGHT * Object.keys(moneyStats).length;
-  transportCtx.height = BAR_HEIGHT * Object.keys(transportStats).length;
-  timeCtx.height = BAR_HEIGHT * Object.keys(timeStats).length;
+  moneyCtx.height = BarHeight * Object.keys(moneyStats).length;
+  transportCtx.height = BarHeight * Object.keys(transportStats).length;
+  timeCtx.height = BarHeight * Object.keys(timeStats).length;
   const moneyChartCfg = {
     chartTitle: `MONEY`,
     canvas: moneyCtx,
@@ -266,16 +282,17 @@ const renderFilters = () => {
   filterContainer.innerHTML = ``;
   Object.keys(PointFilter).forEach((key) => {
     const filter = new Filter({title: key});
-    filter.onClick = () => toggelFilterHandler(PointFilter[key]);
+    filter.onClick = () => toggleFilterHandler(PointFilter[key]);
     filterContainer.appendChild(filter.render());
   });
 };
 
-const toggelFilterHandler = (filter) => {
+const toggleFilterHandler = (filter) => {
   activeFilter = filter;
   clearContainer(pointsContainer);
   let filtered = filterPoints(points, activeFilter);
   let sorted = sortPoints(filtered, activeSort);
+  renderTotalPrice(calculateTotalPrice(sorted));
   renderPoints(pointsContainer, sorted);
 };
 
@@ -290,8 +307,8 @@ const toggleSortHandler = (evt) => {
 const init = () => {
   const originalContainer = activeContainer.cloneNode(true);
   activeContainer.innerHTML = `Loading route...`;
-  apiProvider.getDestinations().then((destinations) => depenendencies.register(`destinations`, destinations));
-  apiProvider.getOffers().then((offers) => depenendencies.register(`offers`, offers));
+  dependenciesContainer.register(`destinations`, apiProvider.getDestinations());
+  dependenciesContainer.register(`offers`, apiProvider.getOffers());
   apiProvider.getPoints()
     .then((loadedPoints) => {
       points = loadedPoints;
@@ -313,16 +330,6 @@ const init = () => {
     .catch((error) => (activeContainer.innerHTML = error.message));
   contentSwitches.forEach((element) => element.addEventListener(`click`, toggleVisibleContent));
   renderFilters();
-  document.addEventListener(`offer-accepted`, (evt) => {
-    const currency = totalPrice.textContent.substring(0, 1);
-    const newTotal = parseFloat(totalPrice.textContent.substring(1)) + evt.detail.price;
-    totalPrice.textContent = `${currency} ${newTotal}`;
-  });
-  document.addEventListener(`offer-rejected`, (evt) => {
-    const currency = totalPrice.textContent.substring(0, 1);
-    const newTotal = parseFloat(totalPrice.textContent.substring(1)) - evt.detail.price;
-    totalPrice.textContent = `${currency} ${newTotal}`;
-  });
 };
 
 init();

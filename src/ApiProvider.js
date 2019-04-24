@@ -15,25 +15,19 @@ class ApiProvider {
     this._icons = this._dependencies[`icons`];
   }
 
-  getPoints() {
-    return this._http(`points`, RequestMethod.GET)
-      .then((response) => (response.json()))
-      .then((points) => (points.map((point) => this.mapToDTO(point))))
-      .catch(() => {
-        const error = new Error(`Something went wrong while loading your route info. Check your connection or try again later`);
-        return Promise.reject(error);
-      });
-  }
-  mapToDTO(model) {
+  convertToClient(model) {
     const mappedModel = cloneDeep(model);
     const {date_from: dateFrom, date_to: dateTo, base_price: price} = mappedModel;
     mappedModel.dateFrom = new Date(dateFrom);
     mappedModel.dateTo = new Date(dateTo);
     mappedModel.price = price;
     mappedModel.icon = this._icons[mappedModel.type];
+    delete mappedModel[`date_from`];
+    delete mappedModel[`date_to`];
+    delete mappedModel[`base_price`];
     return mappedModel;
   }
-  mapToDAO(model) {
+  static convertToServer(model) {
     const mappedModel = cloneDeep(model);
     const {dateFrom, dateTo, price} = mappedModel;
     mappedModel[`date_from`] = dateFrom.getTime();
@@ -44,35 +38,41 @@ class ApiProvider {
     delete mappedModel.price;
     return mappedModel;
   }
+  deletePoint(pointId) {
+    const url = `points/${pointId}`;
+    return this._request(url, RequestMethod.DELETE);
+  }
   getDestinations() {
-    return this._http(`destinations`, RequestMethod.GET)
+    return this._request(`destinations`, RequestMethod.GET)
       .then((response) => {
         return response.json();
       });
   }
   getOffers() {
-    return this._http(`offers`, RequestMethod.GET)
+    return this._request(`offers`, RequestMethod.GET)
       .then((response) => {
         return response.json();
       });
   }
-  createPoint(model) {
-    const url = `points`;
-    return this._http(url, RequestMethod.POST, this.mapToDAO(model))
+  getPoints() {
+    return this._request(`points`, RequestMethod.GET)
       .then((response) => (response.json()))
-      .then((point) => (this.mapToDTO(point)));
+      .then((points) => (points.map((point) => this.convertToClient(point))))
+      .catch(() => {
+        const error = new Error(`Something went wrong while loading your route info. Check your connection or try again later`);
+        return Promise.reject(error);
+      });
   }
   savePoint(model) {
-    const url = `points/${model.id}`;
-    return this._http(url, RequestMethod.PUT, this.mapToDAO(model))
+    let url = `points`;
+    if (model.id) {
+      url += `/${model.id}`;
+    }
+    return this._request(url, model.id ? RequestMethod.PUT : RequestMethod.POST, ApiProvider.convertToServer(model))
       .then((response) => (response.json()))
-      .then((point) => (this.mapToDTO(point)));
+      .then((point) => (this.convertToClient(point)));
   }
-  deletePoint(pointId) {
-    const url = `points/${pointId}`;
-    return this._http(url, RequestMethod.DELETE);
-  }
-  _http(endpoint, method, model) {
+  _request(endpoint, method, model) {
     const options = {
       method,
       headers: this._headers
