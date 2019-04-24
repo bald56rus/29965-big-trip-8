@@ -74,12 +74,6 @@ class EditTripPoint extends Component {
     travelsModes.forEach((input) => (input.addEventListener(`change`, this._changeTravelModeHandler)));
   }
 
-  unbind() {
-    document.removeEventListener(`keydown`, this._cancelHandler);
-    form.removeEventListener(`submit`, this._saveHandler);
-    form.removeEventListener(`reset`, this._deleteHandler);
-  }
-
   static createMapper(model) {
     model[`is_favorite`] = false;
     model.offers.forEach((offer) => (offer.accepted = false));

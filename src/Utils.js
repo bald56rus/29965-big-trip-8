@@ -1,16 +1,3 @@
-const getRandom = (min, max) => {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-const shuffleArray = (source) => {
-  for (let i = 0; i < source.length; i++) {
-    let j = getRandom(0, source.length - 1);
-    let swap = source[i];
-    source[i] = source[j];
-    source[j] = swap;
-  }
-  return source;
-};
 
 function getProperty(model, path) {
   if (path.length === 0) {
@@ -40,7 +27,5 @@ function _render(template, patterns, model) {
 const render = (template, model) => _render(template, [...new Set(template.match(/{{.*?}}/gm))], model);
 
 export {
-  getRandom,
-  shuffleArray,
   render
 };

@@ -7,7 +7,7 @@ import DependenciesContainer from './DependenciesContainer';
 import moment from 'moment';
 import TripDay from './TripDay';
 
-const BarHeight = 55;
+const BAR_HEIGHT = 55;
 
 const PointFilter = {
   'everything': () => true,
@@ -252,9 +252,9 @@ const calculateTotalPrice = (pointList) => {
 const renderStats = (pointList) => {
   const stats = calculateStats(pointList);
   const {money: moneyStats, transport: transportStats, time: timeStats} = stats;
-  moneyCtx.height = BarHeight * Object.keys(moneyStats).length;
-  transportCtx.height = BarHeight * Object.keys(transportStats).length;
-  timeCtx.height = BarHeight * Object.keys(timeStats).length;
+  moneyCtx.height = BAR_HEIGHT * Object.keys(moneyStats).length;
+  transportCtx.height = BAR_HEIGHT * Object.keys(transportStats).length;
+  timeCtx.height = BAR_HEIGHT * Object.keys(timeStats).length;
   const moneyChartCfg = {
     chartTitle: `MONEY`,
     canvas: moneyCtx,
