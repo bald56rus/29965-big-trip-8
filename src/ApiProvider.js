@@ -15,15 +15,6 @@ class ApiProvider {
     this._icons = this._dependencies[`icons`];
   }
 
-  getPoints() {
-    return this._request(`points`, RequestMethod.GET)
-      .then((response) => (response.json()))
-      .then((points) => (points.map((point) => this.convertToClient(point))))
-      .catch(() => {
-        const error = new Error(`Something went wrong while loading your route info. Check your connection or try again later`);
-        return Promise.reject(error);
-      });
-  }
   convertToClient(model) {
     const mappedModel = cloneDeep(model);
     const {date_from: dateFrom, date_to: dateTo, base_price: price} = mappedModel;
@@ -31,6 +22,9 @@ class ApiProvider {
     mappedModel.dateTo = new Date(dateTo);
     mappedModel.price = price;
     mappedModel.icon = this._icons[mappedModel.type];
+    delete mappedModel[`date_from`];
+    delete mappedModel[`date_to`];
+    delete mappedModel[`base_price`];
     return mappedModel;
   }
   static convertToServer(model) {
@@ -44,6 +38,10 @@ class ApiProvider {
     delete mappedModel.price;
     return mappedModel;
   }
+  deletePoint(pointId) {
+    const url = `points/${pointId}`;
+    return this._request(url, RequestMethod.DELETE);
+  }
   getDestinations() {
     return this._request(`destinations`, RequestMethod.GET)
       .then((response) => {
@@ -56,21 +54,23 @@ class ApiProvider {
         return response.json();
       });
   }
-  createPoint(model) {
-    const url = `points`;
-    return this._request(url, RequestMethod.POST, ApiProvider.convertToServer(model))
+  getPoints() {
+    return this._request(`points`, RequestMethod.GET)
       .then((response) => (response.json()))
-      .then((point) => (ApiProvider.convertToClient(point)));
+      .then((points) => (points.map((point) => this.convertToClient(point))))
+      .catch(() => {
+        const error = new Error(`Something went wrong while loading your route info. Check your connection or try again later`);
+        return Promise.reject(error);
+      });
   }
   savePoint(model) {
-    const url = `points/${model.id}`;
-    return this._request(url, RequestMethod.PUT, ApiProvider.convertToServer(model))
+    let url = `points`;
+    if (model.id) {
+      url += `/${model.id}`;
+    }
+    return this._request(url, model.id ? RequestMethod.PUT : RequestMethod.POST, ApiProvider.convertToServer(model))
       .then((response) => (response.json()))
-      .then((point) => (ApiProvider.convertToClient(point)));
-  }
-  deletePoint(pointId) {
-    const url = `points/${pointId}`;
-    return this._request(url, RequestMethod.DELETE);
+      .then((point) => (this.convertToClient(point)));
   }
   _request(endpoint, method, model) {
     const options = {

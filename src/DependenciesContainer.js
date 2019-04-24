@@ -12,6 +12,10 @@ class DependenciesContainer {
     this[key] = value;
   }
 
+  resolve(key) {
+    return this[key];
+  }
+
 }
 
 export default DependenciesContainer;

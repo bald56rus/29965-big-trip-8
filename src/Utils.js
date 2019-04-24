@@ -16,15 +16,15 @@ function getProperty(model, path) {
   if (path.length === 0) {
     return undefined;
   }
-  const [propertyName, ...sub] = path;
+  const [propertyName, ...rest] = path;
   const property = model[propertyName];
   if (!property) {
     return undefined;
   }
-  if (sub.length === 0) {
+  if (rest.length === 0) {
     return property;
   }
-  return getProperty(property, sub);
+  return getProperty(property, rest);
 }
 
 function _render(template, patterns, model) {

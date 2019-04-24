@@ -1,9 +1,6 @@
 import Chart from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-let chartInstance = null;
-export {chartInstance};
-
 class Stats {
   constructor(chartConfig) {
     this._chartTitle = chartConfig.chartTitle;
@@ -19,7 +16,7 @@ class Stats {
   }
 
   render() {
-    chartInstance = new Chart(this._canvas, {
+    this.chartInstance = new Chart(this._canvas, {
       plugins: [ChartDataLabels],
       type: `horizontalBar`,
       data: {

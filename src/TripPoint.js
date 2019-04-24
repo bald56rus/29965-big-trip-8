@@ -9,6 +9,16 @@ class TripPoint extends Component {
     this._clickHandler = this._clickHandler.bind(this);
   }
 
+  bind() {
+    this._element.addEventListener(`click`, this._clickHandler);
+  }
+
+  _clickHandler() {
+    if (typeof this._onCLick === `function`) {
+      this._onCLick(this._element, this._model);
+    }
+  }
+
   _defineServiceFields(model) {
     const mappedModel = cloneDeep(model);
     const {dateFrom, dateTo} = mappedModel;
@@ -39,28 +49,18 @@ class TripPoint extends Component {
       .querySelector(`.trip-point`)
       .cloneNode(true);
     template.innerHTML = render(template.innerHTML, this._defineServiceFields(this._model));
-    const offerContainer = template.querySelector(`.trip-point__offers`);
+    const offersContainer = template.querySelector(`.trip-point__offers`);
     this._model.offers.slice(0, 2).map((offer) => {
       const {title, price} = offer;
       const element = document.createElement(`template`);
       element.innerHTML = `<li><button class="trip-point__offer">${title} +&euro;&nbsp;${price}</button></li>`;
       return element.content;
-    }).forEach((offer) => offerContainer.appendChild(offer));
+    }).forEach((offer) => offersContainer.appendChild(offer));
     return template;
   }
 
   set onClick(handler) {
     this._onCLick = handler;
-  }
-
-  _clickHandler() {
-    if (typeof this._onCLick === `function`) {
-      this._onCLick(this._element, this._model);
-    }
-  }
-
-  bind() {
-    this._element.addEventListener(`click`, this._clickHandler);
   }
 }
 

@@ -60,8 +60,8 @@ const Icons = {
   "sightseeing": `🏛️`,
   "restaurant": `🍴`,
 };
-const depenendencies = new DependenciesContainer();
-depenendencies.register(`icons`, Icons);
+const dependenciesContainer = new DependenciesContainer();
+dependenciesContainer.register(`icons`, Icons);
 let points = [];
 const apiProvider = new ApiProvider({
   baseUrl: `https://es8-demo-srv.appspot.com/big-trip`,
@@ -71,7 +71,7 @@ const apiProvider = new ApiProvider({
     'Authorization': `Basic eo0w590ik29889i`
   }
 });
-depenendencies.register(`apiProvider`, apiProvider);
+dependenciesContainer.register(`apiProvider`, apiProvider);
 
 const toggleVisibleContent = (evt) => {
   evt.preventDefault();
@@ -95,10 +95,11 @@ const removePoint = (savedPoints, pointId) => {
 };
 
 const addPointHandler = () => {
+  const now = new Date();
   const point = {
     type: ``,
-    dateFrom: new Date(),
-    dateTo: new Date(),
+    dateFrom: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    dateTo: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
     offers: [],
     destination: {
       pictures: []
@@ -290,8 +291,8 @@ const toggleSortHandler = (evt) => {
 const init = () => {
   const originalContainer = activeContainer.cloneNode(true);
   activeContainer.innerHTML = `Loading route...`;
-  apiProvider.getDestinations().then((destinations) => depenendencies.register(`destinations`, destinations));
-  apiProvider.getOffers().then((offers) => depenendencies.register(`offers`, offers));
+  dependenciesContainer.register(`destinations`, apiProvider.getDestinations());
+  dependenciesContainer.register(`offers`, apiProvider.getOffers());
   apiProvider.getPoints()
     .then((loadedPoints) => {
       points = loadedPoints;
